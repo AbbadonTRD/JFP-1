@@ -89,7 +89,7 @@ h1{grid-column:2;margin:0;font-weight:400;font-size:clamp(46px,7.6vw,120px);line
 
 /* ---------- Browser bars: Safari 26 ignores theme-color and tints from the body background, or from fixed/sticky elements at the screen edges ---------- */
 .bar-tint{display:none}
-@media (hover:none){.bar-tint{display:block;position:fixed;left:0;right:0;height:2px;z-index:50}.bar-tint.t{top:0}.bar-tint.b{bottom:0}}
+@media (hover:none){.bar-tint{display:block;position:fixed;left:0;right:0;z-index:50;pointer-events:none}.bar-tint.t{top:0;height:max(6px,env(safe-area-inset-top,0px))}.bar-tint.b{bottom:0;height:max(6px,env(safe-area-inset-bottom,0px))}}
 
 /* ---------- Cursor, wipes, reveals ---------- */
 html.pxc,html.pxc *{cursor:none!important}
@@ -636,6 +636,7 @@ function edgeSprite(w,h,color,hs,vs){
 }
 
 /* ================= Scroll sequence ================= */
+var syncBars=function(){};
 var N=120, imgs=new Array(N), seq=document.getElementById("seq"), sx=seq.getContext("2d",{alpha:false}), STAGE=css("--stage"), seqEdges=null;
 function src(i){return "frames/f_"+String(i+1).padStart(3,"0")+".webp";}
 function load(i){var im=new Image();im.decoding="async";im.src=src(i);imgs[i]=im;}
@@ -650,12 +651,12 @@ var LABELS=[
  {t:"Gorilla Glass",s:"Scratch-resistant front panel",ax:.155,ay:.47,side:"L",ly:.47},
  {t:"Touch wheel",s:"Scroll, skip and select with a thumb",ax:.335,ay:.59,side:"L",ly:.62},
  {t:"Key mat",s:"Shuffle, repeat, favourite",ax:.33,ay:.69,side:"L",ly:.78},
- {t:"Raspberry Pi",s:"Runs the Jellyfin client",ax:.54,ay:.665,side:"R",ly:.79},
  {t:"SIM tray",s:"Mobile data, so the library follows you",ax:.535,ay:.285,side:"TL",ly:.03},
- {t:"Battery",s:"Rechargeable lithium cell",ax:.665,ay:.55,side:"R",ly:.72},
  {t:"Speaker",s:"No headphones needed",ax:.668,ay:.262,side:"TR",ly:.03},
+ {t:"Back plate",s:"Aluminium with a speaker grille",ax:.86,ay:.33,side:"R",ly:.30},
  {t:"USB-C board",s:"Charging and data",ax:.76,ay:.545,side:"R",ly:.52},
- {t:"Back plate",s:"Aluminium with a speaker grille",ax:.86,ay:.33,side:"R",ly:.30}
+ {t:"Battery",s:"Rechargeable lithium cell",ax:.665,ay:.55,side:"R",ly:.72},
+ {t:"Raspberry Pi",s:"Runs the Jellyfin client",ax:.54,ay:.665,side:"R",ly:.79}
 ];
 var frameEl=document.getElementById("frame"), linesEl=document.getElementById("lines"), labelsEl=document.getElementById("labels");
 var NS="http://www.w3.org/2000/svg", els=[];
@@ -947,12 +948,12 @@ setTimeout(function(){layout();update();},600);
    ["glass","The Bodyguard","Gorilla Glass","Takes the scratches so the display does not have to."],
    ["wheel","The Pilot","Touch wheel","One thumb is all it needs to steer."],
    ["keys","The Shortcuts","Key mat","Shuffle, repeat and favourite, without a menu."],
-   ["pi","The Brain","Raspberry Pi","Talks to your Jellyfin server and decodes the music."],
    ["sim","The Connector","SIM tray","Keeps the library in reach when there is no Wi-Fi."],
-   ["battery","The Stamina","Battery","Charged over USB-C, drained by good albums."],
    ["speaker","The Voice","Speaker","For the moments without headphones."],
+   ["plate","The Backbone","Back plate","Holds everything together and lets the sound out."],
    ["usb","The Lifeline","USB-C board","Charging and data through one small port."],
-   ["plate","The Backbone","Back plate","Holds everything together and lets the sound out."]
+   ["battery","The Stamina","Battery","Charged over USB-C, drained by good albums."],
+   ["pi","The Brain","Raspberry Pi","Talks to your Jellyfin server and decodes the music."]
   ];
   var grid=document.getElementById("crewGrid"); if(!grid)return;
   CREW.forEach(function(m,i){
@@ -1094,6 +1095,7 @@ setTimeout(function(){layout();update();},600);
     rig.style.transform="translate("+(vw/2-fx*s).toFixed(2)+"px,"+(vh/2-fy*s).toFixed(2)+"px) scale("+s.toFixed(4)+")";
     var t=sm((e-0.3)/0.45);
     pin.style.background=sec.style.background="rgb("+[11+(236-11)*t,11+(235-11)*t,10+(230-10)*t].map(Math.round).join(",")+")";
+    syncBars();
     cap.style.opacity=String(sm((e-0.8)/0.2));
     /* soft black vignette while zoomed in: no hard section edge, no blurry body; gone once the player shows */
     veil.style.opacity=String(1-sm(e/0.42));
@@ -1282,21 +1284,22 @@ setTimeout(function(){layout();update();},600);
   size(); render(true);
 })();
 
-/* ================= Browser bars: address bar and status area take the colour of the section at that screen edge ================= */
+/* ================= Browser bars: address bar and status area take the colour of the section at that screen edge.
+   Safari only samples fixed strips from 6px tall. ================= */
 (function(){
   var meta=document.querySelector('meta[name="theme-color"]'), barT=document.getElementById("barT"), barB=document.getElementById("barB"), root=document.documentElement, zoomPin=document.getElementById("zoomPin");
-  var secs=[["top","--bg"],["inside","--stage"],["crew","--crew-bg"],["specs","--paper"],["studio","--studio-bg"],["outro","--studio-bg"],["tilt","--studio-bg"],["listen","--studio-bg"],["zoom",null],["join","--paper"]].map(function(q){return {el:document.getElementById(q[0]),col:q[1]?css(q[1]):null,top:0};});
+  var secs=[["top","--bg"],["inside","--stage"],["crew","--crew-bg"],["specs","--paper"],["studio","--studio-bg"],["outro","--studio-bg"],["tilt","--studio-bg"],["listen","--studio-bg"],["zoom",null],["join","--paper"]].map(function(q){return {el:document.getElementById(q[0]),col:q[1]?css(q[1]):null};});
   var lastT="", lastB="", timer=0;
-  function measure(){var y=window.scrollY;secs.forEach(function(o){o.top=o.el.getBoundingClientRect().top+y;});apply();}
-  function colorAt(y){for(var i=secs.length-1;i>=0;i--){if(secs[i].top<=y)return secs[i].col||zoomPin.style.background||"#0b0b0a";}return secs[0].col;}
+  function colorAt(y){for(var i=secs.length-1;i>=0;i--){if(secs[i].el.getBoundingClientRect().top<=y)return secs[i].col||zoomPin.style.background||"#0b0b0a";}return secs[0].col;}
   function apply(){
-    var y=window.scrollY, ct=colorAt(y+1), cb=colorAt(y+window.innerHeight-1);
+    var ct=colorAt(1), cb=colorAt(window.innerHeight-1);
     if(ct!==lastT){lastT=ct;meta.setAttribute("content",ct);barT.style.background=ct;root.style.backgroundColor=ct;document.body.style.backgroundColor=ct;}
     if(cb!==lastB){lastB=cb;barB.style.background=cb;}
   }
-  window.addEventListener("scroll",function(){if(!timer)timer=setTimeout(function(){timer=0;apply();},80);},{passive:true});
-  onResize(measure); window.addEventListener("load",measure); setTimeout(measure,1000);
-  measure();
+  syncBars=function(){if(!timer)timer=setTimeout(function(){timer=0;apply();},80);};
+  window.addEventListener("scroll",syncBars,{passive:true});
+  onResize(apply); window.addEventListener("load",apply); setTimeout(apply,1000);
+  apply();
 })();
 })();
 </script>
