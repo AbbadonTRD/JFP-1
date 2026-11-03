@@ -646,8 +646,8 @@ var KEYS=[[0,0],[0.06,0],[0.16,24],[0.24,60],[0.58,N-1],[1,N-1]];
 function frameAt(p){for(var i=1;i<KEYS.length;i++){if(p<=KEYS[i][0]){var a=KEYS[i-1],b=KEYS[i];var t=(p-a[0])/(b[0]-a[0]||1);return a[1]+(b[1]-a[1])*t;}}return N-1;}
 
 var LABELS=[
- {t:"Gorilla Glass",s:"Scratch-resistant front panel",ax:.155,ay:.47,side:"L",ly:.47},
  {t:"Pixel display",s:"Cover art and now playing",ax:.335,ay:.40,side:"L",ly:.27},
+ {t:"Gorilla Glass",s:"Scratch-resistant front panel",ax:.155,ay:.47,side:"L",ly:.47},
  {t:"Touch wheel",s:"Scroll, skip and select with a thumb",ax:.335,ay:.59,side:"L",ly:.62},
  {t:"Key mat",s:"Shuffle, repeat, favourite",ax:.33,ay:.69,side:"L",ly:.78},
  {t:"Raspberry Pi",s:"Runs the Jellyfin client",ax:.54,ay:.665,side:"R",ly:.79},
@@ -943,8 +943,8 @@ setTimeout(function(){layout();update();},600);
    plate:["KKKKKKKKKKKK","KCCCCCCCCCCK","KCKCKCKCKCCK","KCCCCCCCCCCK","KCKCKCKCKCCK","KCCCCCCCCCCK","KCKCKCKCKCCK","KCCCCCCCCCCK","KCKCKCKCKCCK","KCCCCCCCCCCK","KCCCCCCCCCOK","KKKKKKKKKKKK"]
   };
   var CREW=[
-   ["glass","The Bodyguard","Gorilla Glass","Takes the scratches so the display does not have to."],
    ["display","The Face","Pixel display","Cover art, the track and a progress bar. Nothing else."],
+   ["glass","The Bodyguard","Gorilla Glass","Takes the scratches so the display does not have to."],
    ["wheel","The Pilot","Touch wheel","One thumb is all it needs to steer."],
    ["keys","The Shortcuts","Key mat","Shuffle, repeat and favourite, without a menu."],
    ["pi","The Brain","Raspberry Pi","Talks to your Jellyfin server and decodes the music."],
