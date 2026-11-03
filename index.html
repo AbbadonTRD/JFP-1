@@ -242,7 +242,8 @@ html.pxc,html.pxc *{cursor:none!important}
   .tilt{height:360vh}
   .tilt-copy{padding-top:clamp(36px,8svh,72px)}
   .tilt-copy h2{font-size:min(40px,11.4vw)}
-  .tilt-p{font-size:16px}
+  .tilt-p{font-size:16px;will-change:opacity}
+  .tilt-p .w{transition:none}
   /* size and position come from the script: the device stays large once it stands upright */
   #tiltCv{left:0;top:0;bottom:auto;transform:none;transform-origin:0 0;aspect-ratio:auto;max-width:none;will-change:transform}
   .tilt-feat{bottom:max(14px,env(safe-area-inset-bottom,0px));width:calc(50vw - 24px)}
@@ -597,29 +598,30 @@ heroImg.onload=function(){heroReady=true;buildUnder();};
 heroImg.src="hero-player.webp";
 sizeMosaic(); requestAnimationFrame(loop);
 
-/* ================= Decoded frames: bitmaps around the playhead, so drawImage never decodes a webp mid-scroll ================= */
-function decodedWindow(imgs,R,target,onReady){
-  var N=imgs.length, bm=new Array(N), busy=new Array(N), at=-1, can=!!window.createImageBitmap;
-  function want(i){
-    var im=imgs[i]; if(!can||i<0||i>=N||bm[i]||busy[i]||!im||!im.complete||!im.naturalWidth)return;
-    busy[i]=true;
-    var t=target(), small=t[0]<im.naturalWidth;
-    (im.decode?im.decode():Promise.resolve()).then(function(){return small?createImageBitmap(im,{resizeWidth:t[0],resizeHeight:t[1],resizeQuality:"medium"}):createImageBitmap(im);}).then(function(b){
-      busy[i]=false;
-      if(at<0||Math.abs(i-at)>R+4){b.close();return;}
-      bm[i]=b; onReady(i);
-    }).catch(function(){busy[i]=false;can=false;});
+/* ================= Decoded frames: decode() ahead of the playhead, so drawImage never decodes a webp mid-scroll.
+   The browser owns the decoded memory: closing ImageBitmaps while scrubbing crashed the renderer. ================= */
+function decodedWindow(imgs,R,onReady){
+  var N=imgs.length, ready=new Array(N), busy=new Array(N), at=-1, can=!!(window.Image&&Image.prototype.decode), running=0, MAX=coarse?2:4;
+  function start(i){
+    var im=imgs[i]; if(running>=MAX||i<0||i>=N||ready[i]||busy[i]||!im||!im.complete||!im.naturalWidth)return;
+    busy[i]=true; running++;
+    im.decode().then(function(){
+      busy[i]=false; running--;
+      if(at>=0&&Math.abs(i-at)<=R+4){ready[i]=true;onReady(i);}
+      pump();
+    }).catch(function(){busy[i]=false;running--;can=false;});
   }
+  function pump(){if(!can||at<0)return;for(var d=0;d<=R&&running<MAX;d++){start(at+d);if(d)start(at-d);}}
   return {
     touch:function(f,force){
       var a=Math.round(f); if(a===at&&!force)return; at=a;
-      for(var i=0;i<N;i++){if(bm[i]&&Math.abs(i-a)>R+4){bm[i].close();bm[i]=null;}}
-      want(a); for(var d=1;d<=R;d++){want(a+d);want(a-d);}
+      for(var i=0;i<N;i++){if(ready[i]&&Math.abs(i-a)>R+4)ready[i]=false;}
+      pump();
     },
-    release:function(){at=-1;for(var i=0;i<N;i++){if(bm[i]){bm[i].close();bm[i]=null;}}},
-    get:function(i){return bm[i]||null;},
+    release:function(){at=-1;ready=new Array(N);},
+    get:function(i){return ready[i]?imgs[i]:null;},
     can:function(){return can;},
-    near:function(i){for(var d=0;d<=R;d++){if(bm[i-d])return bm[i-d];if(bm[i+d])return bm[i+d];}return null;}
+    near:function(i){for(var d=0;d<=R;d++){if(ready[i-d])return imgs[i-d];if(ready[i+d])return imgs[i+d];}return null;}
   };
 }
 
@@ -691,7 +693,7 @@ function layout(){
   draw(curF,true);
 }
 var curP=0, tgtP=0, curF=0, lastKey=-1, lastOpen=-1, lastShown=-1, seqOn=true, drawnA=null, drawnB=null, drawnF=-1;
-var dec=decodedWindow(imgs,coarse?5:10,function(){return [seq.width,seq.height];},function(i){var a=Math.floor(curF);if(i===a||i===a+1)draw(curF,true);});
+var dec=decodedWindow(imgs,coarse?5:10,function(i){var a=Math.floor(curF);if(i===a||i===a+1)draw(curF,true);});
 imgs.forEach(function(im){im.addEventListener("load",function(){if(seqOn)dec.touch(curF,true);});});
 function draw(f,force){
   var a=Math.floor(f), b=Math.min(N-1,a+1), fr=f-a;
@@ -1187,7 +1189,7 @@ setTimeout(function(){layout();update();},600);
 /* ================= Tilt: scroll scrubs the rise, copy lights up word by word ================= */
 (function(){
   var sec=document.getElementById("tilt"); if(!sec)return;
-  var N=140, imgs=new Array(N), started=false, cv=document.getElementById("tiltCv"), g=cv.getContext("2d",{alpha:false}), bg=css("--studio-bg"), edges=null, edgesM=null, tiltOn=true, dec=null, drewT=false, isM=false, M=null;
+  var N=window.innerWidth<860?70:140, imgs=new Array(N), started=false, cv=document.getElementById("tiltCv"), g=cv.getContext("2d",{alpha:false}), bg=css("--studio-bg"), edges=null, edgesM=null, tiltOn=true, dec=null, drewT=false, isM=false, M=null;
   var pin=sec.querySelector(".tilt-pin"), title=document.getElementById("tiltTitle");
   var copy=document.getElementById("tiltCopy"), P=document.getElementById("tiltP"), fl=document.getElementById("featL"), fr=document.getElementById("featR");
   /* split the paragraph into words, keep the bold phrases as key words */
@@ -1208,8 +1210,8 @@ setTimeout(function(){layout();update();},600);
   [].forEach.call(sec.querySelectorAll(".tilt-feat canvas"),function(c){var x=c.getContext("2d"),r=SP[c.dataset.s];
     for(var y=0;y<12;y++)for(var i=0;i<12;i++){var ch=r[y].charAt(i);if(COL[ch]){x.fillStyle=COL[ch];x.fillRect(i,y,1,1);}}});
   function load(){if(started)return;started=true;
-    for(var i=0;i<N;i++){var im=new Image();im.decoding="async";im.src="tilt/t_"+String(i+1).padStart(3,"0")+".webp";imgs[i]=im;im.addEventListener("load",function(){if(tiltOn)dec.touch(lastF<0?0:lastF,true);});if(i===0)im.onload=function(){render(true);};}
-    dec=decodedWindow(imgs,coarse?5:10,function(){return [cv.width,cv.height];},function(i){var a=Math.floor(lastF);if(i===a||i===a+1)render(true);});}
+    for(var i=0;i<N;i++){var im=new Image();im.decoding="async";im.src="tilt/t_"+String(Math.round(i*139/(N-1))+1).padStart(3,"0")+".webp";imgs[i]=im;im.addEventListener("load",function(){if(tiltOn)dec.touch(lastF<0?0:lastF,true);});if(i===0)im.onload=function(){render(true);};}
+    dec=decodedWindow(imgs,coarse?5:10,function(i){var a=Math.floor(lastF);if(i===a||i===a+1)render(true);});}
   if("IntersectionObserver" in window)new IntersectionObserver(function(e){tiltOn=e[0].isIntersecting;if(tiltOn)load();else if(dec)dec.release();},{rootMargin:"150% 0px"}).observe(sec); else load();
   function get(i){for(var k=Math.max(0,Math.min(N-1,i));k>=0;k--){var im=imgs[k];if(im&&im.complete&&im.naturalWidth)return im;}return null;}
   function sm(x){x=Math.max(0,Math.min(1,x));return x*x*(3-2*x);}
@@ -1224,18 +1226,22 @@ setTimeout(function(){layout();update();},600);
       var vw=pin.clientWidth, ph=pin.clientHeight, lift=Math.max(0,(parseFloat(getComputedStyle(copy).paddingTop)||0)-20);
       var yT=title.offsetTop+title.offsetHeight-lift+14, yB=(fl.offsetHeight?Math.min(fl.offsetTop,fr.offsetTop):ph)-8;
       var Wf=Math.min((yB-yT)/DEV_H*16/9,0.8*vw/DEV_W), F=Wf*9/16, W0=Math.min(vw,ph*1.14);
-      M={lift:lift,k0:W0/Wf,x0:(vw-W0)/2,y0:ph-W0*9/16+ph*0.04,x1:(vw-Wf)/2,y1:yT+(yB-yT-F*DEV_H)/2-F*DEV_TOP};
+      M={lift:lift,vw:vw,Wf:Wf,F:F,k0:W0/Wf,fade:W0<vw,b0:ph*1.04,b1:yT+(yB-yT-F*DEV_H)/2-F*DEV_TOP+F};
       cv.style.width=Wf+"px"; cv.style.height=F+"px"; cw=Wf;
     }else{
-      M=null; cv.style.width=cv.style.height=cv.style.transform=P.style.opacity=""; cw=cv.clientWidth;
+      M=null; cv.style.width=cv.style.height=cv.style.transform=P.style.opacity=""; cv._st=P._st=copy._st=null; cw=cv.clientWidth;
     }
     var w=Math.min(coarse?1280:1600,Math.round(cw*maxDp()));
     if(cv.width!==w||edgesM!==isM){
       cv.width=w;cv.height=Math.round(w*9/16);lastF=-1;edgesM=isM;
-      edges=edgeSprite(cv.width,cv.height,bg,[[0.02,0],[0.18,1],[0.82,1],[0.98,0]],isM?[[0,0],[0.05,1],[0.92,1],[1,0]]:[[0,0],[0.18,1],[0.80,1],[0.99,0]]);
+      /* phones: frames share the section colour and the screen clips them, so only landscape (frame narrower than the screen) needs the fade */
+      edges=(!isM||M.fade)?edgeSprite(cv.width,cv.height,bg,[[0.02,0],[0.18,1],[0.82,1],[0.98,0]],isM?[[0,0],[0.05,1],[0.92,1],[1,0]]:[[0,0],[0.18,1],[0.80,1],[0.99,0]]):null;
+      g.fillStyle=bg; g.fillRect(0,0,cv.width,cv.height); drewT=false;
     }
   }
-  var lastPt=-1;
+  var lastPt=-1, lastShow=null;
+  /* style writes are skipped while the value holds still */
+  function setStyle(el,prop,v){var o=el._st||(el._st={});if(o[prop]!==v){o[prop]=v;el.style[prop]=v;}}
   function render(force){
     var vh=window.innerHeight, r=sec.getBoundingClientRect(), total=sec.offsetHeight-vh;
     var p=Math.max(0,Math.min(1,-r.top/(total||1)));
@@ -1243,7 +1249,14 @@ setTimeout(function(){layout();update();},600);
     var t=isM?sm((p-0.4)/0.45):sm(p/0.85), f=t*(N-1);
     if(dec&&tiltOn)dec.touch(f);
     if(!force&&p===lastPt)return; lastPt=p;
-    if(force||Math.abs(f-lastF)>0.01){lastF=f;
+    if(isM){
+      /* phone: one opaque image per frame change; the zoom and the rise are compositor-only transforms */
+      var fi=Math.round(f);
+      if(force||fi!==lastF){lastF=fi;
+        var im=(dec&&dec.near(fi))||((dec&&dec.can()&&drewT)?null:get(fi));
+        if(im){drewT=true;g.drawImage(im,0,0,cv.width,cv.height);if(edges)g.drawImage(edges,0,0);}
+      }
+    }else if(force||Math.abs(f-lastF)>0.01){lastF=f;
       var a=Math.floor(f), b2=Math.min(N-1,a+1), fr2=f-a, ia=(dec&&dec.near(a))||((dec&&dec.can()&&drewT)?null:get(a)), ib=dec?dec.get(b2):null;
       if(ia||!drewT){
         g.globalAlpha=1; g.globalCompositeOperation="source-over"; g.fillStyle=bg; g.fillRect(0,0,cv.width,cv.height);
@@ -1254,14 +1267,14 @@ setTimeout(function(){layout();update();},600);
         if(edges)g.drawImage(edges,0,0);
       }}
     var lit=Math.round(words.length*sm((p+0.04)/(isM?0.42:0.6)));
-    if(lit!==lastLit){lastLit=lit;for(var i=0;i<words.length;i++)words[i].classList.toggle("on",i<lit);}
+    if(lit!==lastLit){for(var i=Math.max(0,Math.min(lit,lastLit));i<Math.max(lit,lastLit);i++)words[i].classList.toggle("on",i<lit);lastLit=lit;}
     if(isM){
-      var e=Math.pow(t,1.5);
-      cv.style.transform="translate3d("+(M.x0+(M.x1-M.x0)*e).toFixed(1)+"px,"+(M.y0+(M.y1-M.y0)*e).toFixed(1)+"px,0) scale("+(M.k0+(1-M.k0)*e).toFixed(4)+")";
-      copy.style.transform="translate3d(0,"+(-M.lift*sm((p-0.42)/0.2)).toFixed(1)+"px,0)";
-      P.style.opacity=String(1-sm((p-0.42)/0.08));
-    }else copy.style.transform="translate3d(0,"+(-p*8).toFixed(2)+"vh,0)";
-    var show=p>(isM?0.84:0.74); fl.classList.toggle("in",show); fr.classList.toggle("in",show);
+      var e=Math.pow(t,1.5), k=M.k0+(1-M.k0)*e, bot=M.b0+(M.b1-M.b0)*sm((t-0.6)/0.4);
+      setStyle(cv,"transform","translate3d("+((M.vw-M.Wf*k)/2).toFixed(1)+"px,"+(bot-M.F*k).toFixed(1)+"px,0) scale("+k.toFixed(4)+")");
+      setStyle(copy,"transform","translate3d(0,"+(-M.lift*sm((p-0.42)/0.2)).toFixed(1)+"px,0)");
+      setStyle(P,"opacity",(1-sm((p-0.42)/0.08)).toFixed(3));
+    }else setStyle(copy,"transform","translate3d(0,"+(-p*8).toFixed(2)+"vh,0)");
+    var show=p>(isM?0.84:0.74); if(show!==lastShow){lastShow=show;fl.classList.toggle("in",show);fr.classList.toggle("in",show);}
   }
   function loop(){var d=tgt-cur; if(reduce||Math.abs(d)<0.0005){cur=tgt;}else cur+=d*0.25; render(false); if(cur!==tgt)requestAnimationFrame(loop); else ticking=false;}
   window.addEventListener("scroll",function(){tgt=window.scrollY;if(!ticking){ticking=true;requestAnimationFrame(loop);}},{passive:true});
