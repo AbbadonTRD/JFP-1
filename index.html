@@ -678,7 +678,7 @@ var S=0, mobile=false;
 function layout(){
   S=frameEl.clientWidth; mobile=window.innerWidth<860; lastKey=-2;
   var dpr2=maxDp(), px=Math.min(1080,Math.round(S*dpr2));
-  if(seq.width!==px){
+  if(px&&seq.width!==px){
     seq.width=px;seq.height=px;sx.fillStyle=STAGE;sx.fillRect(0,0,px,px);
     seqEdges=edgeSprite(px,px,STAGE,[[0,0],[0.08,1],[0.92,1],[1,0]],[[0,0],[0.08,1],[0.92,1],[1,0]]);
   }
@@ -938,11 +938,12 @@ setTimeout(function(){layout();update();},600);
    glass:["KKKKKKKKKKKK","KWWWWWWWWWWK","KWLLLLLWLLWK","KWLLLLWLLLWK","KWLLLWLLLLWK","KWLLWLLLLLWK","KWLWLLLLLLWK","KWWLLLLLLLWK","KWLLLLLLLLWK","KWLLLLLLLLWK","KWWWWWWWWWWK","KKKKKKKKKKKK"],
    display:["KKKKKKKKKKKK","KOOOOOOOOOOK","KOKKKKKKKKOK","KOKOOOOKOKOK","KOKOOOKKOKOK","KOKOOKKKOKOK","KOKOKKKKKKOK","KOKKKKKKKKOK","KOOOOOOOOOOK","KOKKKKOOOOOK","KOOOOOOOOOOK","KKKKKKKKKKKK"],
    wheel:["...CCCCCC...",".CCCCCCCCCC.",".CCCCCCCCCC.","CCCCOOOOCCCC","CCCOOSSOOCCC","CCCOOSOOOCCC","CCCOOOOOOCCC","CCCCOOOOCCCC",".CCCCCCCCCC.",".CCCCCCCCCC.","...CCCCCC...","............"],
+   dial:["..............CCCCCCCC..............","...........CCCCCCCCCCCCCC...........",".........CCCCCCCCCCCCCCCCCC.........",".......CCCCCCCCCCCCCCCCCCCCCC.......","......CCCCLCLCLLLCLLCCLCLCCCCC......",".....CCCCCLLLCLCCCLCLCLCLCCCCCC.....","....CCCCCCLCLCLLCCLCLCLCLCCCCCCC....","...CCCCCCCLCLCLCCCLCLCLCLCCCCCCCC...","...CCCCCCCLCLCLLLCLCLCLLLCCCCCCCC...","..CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC..","..CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC..",".CCCCCCCCCCCCCCCCOOCCCCCCCCCCCCCCCC.",".CCCCCCCCCCCCCOOOOOOOOCCCCCCCCCCCCC.",".CCCCCCCCCCCCOOOOOOOOOOCCCCCCCCCCCC.","CCCCCCCCCCCCOOOSSOOOOOOOCCCCCCCCCCCC","CCCLCCLCCLCCOOSSSSOOOOOOCCLCCLCCLCCC","CCCLCLLCLLCCOOSSSSOOOOOOCCLLCLLCLCCC","CCCLLLLLLLCOOOOSSOOOOOOOOCLLLLLLLCCC","CCCLCLLCLLCOOOOOOOOOOOOOOCLLCLLCLCCC","CCCLCCLCCLCCOOOOOOOOOOOOCCLCCLCCLCCC","CCCCCCCCCCCCOOOOOOOOOOOOCCCCCCCCCCCC","CCCCCCCCCCCCOOOOOOOOOOOOCCCCCCCCCCCC",".CCCCCCCCCCCCOOOOOOOOOOCCCCCCCCCCCC.",".CCCCCCCCCCCCCOOOOOOOOCCCCCCCCCCCCC.",".CCCCCCCCCCCCCCCCOOCCCCCCCCCCCCCCCC.","..CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC..","..CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC..","...CCCCCCCCCCCLCCCLCLCCCCCCCCCCCC...","...CCCCCCCCCCCLLCCLCLCCCCCCCCCCCC...","....CCCCCCCCCCLLLCLCLCCCCCCCCCCC....",".....CCCCCCCCCLLCCLCLCCCCCCCCCC.....","......CCCCCCCCLCCCLCLCCCCCCCCC......",".......CCCCCCCCCCCCCCCCCCCCCC.......",".........CCCCCCCCCCCCCCCCCC.........","...........CCCCCCCCCCCCCC...........","..............CCCCCCCC.............."],
    keys:["....................................","....................................","....................................","....................................","....................................","....................................","....................................","....................................","....................................","....................................","....................................","....................................",".KKKKKKKKK...KKKKKKKKK...KKKKKKKKK..","KKKKKKKKKKK.KKKKKKKKKKK.KKKKKKKKKKK.","KKLLKKKLKKK.KKKKKKLKKKK.KKKOOKOOKKK.","KKKKLKKLLKK.KKLLLLLLKKK.KKOOOOOOOKK.","KKKKKLLLKKK.KKLKKKLKLKK.KKOOOOOOOKK.","KKKKKLKKKKK.KKLKKKKKLKK.KKOOOOOOOKK.","KKKKKLLLKKK.KKLKLKKKLKK.KKKOOOOOKKK.","KKKKLKKLLKK.KKKLLLLLLKK.KKKKOOOKKKK.","KKLLKKKLKKK.KKKKLKKKKKK.KKKKKOKKKKK.","KKKKKKKKKKK.KKKKKKKKKKK.KKKKKKKKKKK.",".KKKKKKKKK...KKKKKKKKK...KKKKKKKKK..","....................................","....................................","....................................","....................................","....................................","....................................","....................................","....................................","....................................","....................................","....................................","....................................","...................................."],
-   pi:["KKKKKKKKKKKK","KOOOKOOOKOOK","KOKOKOKOKOKK","KOKOOOKOOOKK","KKKKKKKKKKKK","LKWWWWWWWWKL","KKWLLLLLLWKK","LKWLLLLLLWKL","KKWLOOLLLWKK","LKWLLLLLLWKL","KKWWWWWWWWKK","KLKLKLKLKLKK"],
-   sim:[".KKKKKKKK...",".KWWWWWWKK..",".KWWWWWWWKK.",".KWWOOOOWWK.",".KWWOKKOWWK.",".KWWOOOOWWK.",".KWWOKKOWWK.",".KWWOOOOWWK.",".KWWWWWWWWK.",".KWWWWWWWWK.",".KKKKKKKKKK.","............"],
+   pi:["....KKKKKKKKKKKKKKKK....","...KKSKKSSSSKKSSSSKKK...","...KKSKKSKKSKKSKKSKKK...","...KKSKKSKKSKKSKKSKKK...","...KKSKKSKKSKKSKKSKKK...","...KKSKKSKKSKKSKKSKKK...","...KKSSSSKKSSSSKKSKKK...","...KKKKKKKKKKKKKKKKKK...","...KKWWWWWWWWWWWWWWKK...","..SSKWLLLLLLLLLLLLMKSS..","...KKWKKKLKKKLKKKLMKK...","..SSKWKLLLKLLLKLKLMKSS..","...KKWKKLLKKKLKKKLMKK...","..SSKWKLLLLLKLKLLLMKSS..","...KKWKKKLKKKLKLLLMKK...","..SSKWLLLLLLLLLLLLMKSS..","...KKWLLOOOLOOOLLLMKK...","..SSKWLLLLOLLLOLLLMKSS..","...KKWLLOOOLOOOLLLMKK...","..SSKWLLLLOLOLLLLLMKSS..","...KKWLLOOOLOOOLLLMKK...","..SSKWLLLLLLLLLLLLMKSS..","...KKWMMMMMMMMMMMMMKK...","....KKKKKKKKKKKKKKKK...."],
+   sim:["....KKKKKKKKKKKKKKKK....","...KKKKKKKKKKKKKKKKKK...","...KOKOKOKOKOKOKOKOKK...","...KOKOKOKOKOKOKOKOKK...","...KOKOKOKOKOKOKOKOKK...","...KOKOKOKOKOKOKOKOKK...","...KOKOKOKOKOKOKOKOKK...","...KOKOKOKOKOKOKOKOKK...","...KOKOKOKOKOKOKOKOKK...","...KKKKKKKKKKKKKKKKK....","...KKKKKKKKKKKKKKKK.....","...KKKKKKKKKKKKKKKK.....","...KKKKKKKKKKKKKKKK.....","...KKKKKKKKKKKKKKKK.....","...KKKKKKKKKKKKKKKKK....","...KKKKKLLLKLLKKKKKKK...","...KKKKKLKKKLKLKKKKKK...","...KKKKKLLLKLKLKKKKKK...","...KKKKKKKLKLKLKKKKKK...","...KKKKKLLLKLLKKKKKKK...","...KKKKKKKKKKKKKKKKKK...","...KKKKKKKKKKKKKKKKKK...","...KKKKKKKKKKKKKKKKKK...","....KKKKKKKKKKKKKKKK...."],
    battery:["............","............","...KK.......","KKKKKKKKKKK.","KLLLLLLLLLK.","KLOOOOOOLLK.","KLOOOOOOLLK.","KLOOOOOOLLK.","KLLLLLLLLLK.","KKKKKKKKKKK.","............","............"],
-   speaker:["....KKKK....","..KKCCCCKK..",".KCCCMMCCCK.",".KCCMKKMCCK.","KCCMKCCKMCCK","KCMKCOOCKMCK","KCMKCOOCKMCK","KCCMKCCKMCCK",".KCCMKKMCCK.",".KCCCMMCCCK.","..KKCCCCKK..","....KKKK...."],
+   speaker:[".KKKKKKKKKKKKKKKKKKKKKK.","KWWWWWWWWWWWWWWWWWWWWWWK","KWKKWWWWKKKKKKKKWWWWKKWK","KWKKWWKKMMMMMMMMKKWWKKWK","KWWWWKKMMCCCCCCMMKKWWWWK","KWWWKMMCCCCCCCCCCMMKWWWK","KWWKKMCCCCKKKKCCCCMKKWWK","KWWKMCCCKKCCCCKKCCCMKWWK","KWKMMCCKKCCCCCCKKCCMMKWK","KWKMCCCKCCOOOOCCKCCCMKWK","KWKMCCKCCOSSOOOCCKCCMKWK","KWKMCCKCCOSSOOOCCKCCMKWK","KWKMCCKCCOOOOOOCCKCCMKWK","KWKMCCKCCOOOOOOCCKCCMKWK","KWKMCCCKCCOOOOCCKCCCMKWK","KWKMMCCKKCCCCCCKKCCMMKWK","KWWKMCCCKKCCCCKKCCCMKWWK","KWWKKMCCCCKKKKCCCCMKKWWK","KWWWKMMCCCCCCCCCCMMKWWWK","KWWWWKKMMCCCCCCMMKKWWWWK","KWKKWWKKMMMMMMMMKKWWKKWK","KWKKWWWWKKKKKKKKWWWWKKWK","KWWWWWWWWWWWWWWWWWWWWWWK",".KKKKKKKKKKKKKKKKKKKKKK."],
    usb:["............",".KKKKKKKKKK.","KCCCCCCCCCCK","KCKKKKKKKKCK","KCKCCCCCCKCK","KCKKKKKKKKCK","KCCCCCCCCCCK",".KKKKKKKKKK.","............","............","............","............"],
    plate:["KKKKKKKKKKKK","KCCCCCCCCCCK","KCKCKCKCKCCK","KCCCCCCCCCCK","KCKCKCKCKCCK","KCCCCCCCCCCK","KCKCKCKCKCCK","KCCCCCCCCCCK","KCKCKCKCKCCK","KCCCCCCCCCCK","KCCCCCCCCCOK","KKKKKKKKKKKK"],
    jack:[".....MM.....","....MWWM....","....MWWM....","....KKKK....","....MWWM....","....KKKK....","....MWWM....","....MWWM....","..KKKKKKKK..","..KOOOOOOK..","..KCCCCCCK..","..KCCCCCCK.."],
@@ -951,7 +952,7 @@ setTimeout(function(){layout();update();},600);
   var CREW=[
    ["display","The Face","Pixel display","Cover art, the track and a progress bar. 2.0 inch IPS colour, 240 x 320."],
    ["glass","The Bodyguard","Tempered glass","Takes the scratches so the display does not have to. Black border around the screen."],
-   ["wheel","The Pilot","Touch wheel","One thumb steers, a small tick answers. Turn for volume, hold the centre to seek."],
+   ["dial","The Pilot","Touch wheel","One thumb steers, a small tick answers. Turn for volume, hold the centre to seek."],
    ["keys","The Shortcuts","Key mat","Shuffle, repeat and favourite, without a menu. Three keys, one job each."],
    ["sim","The Archive","microSD","Holds your library, so no signal is needed. Synced over Wi-Fi from your own server."],
    ["speaker","The Voice","Speaker","For the moments without headphones. Plays straight out through the grille on the back."],
@@ -962,13 +963,14 @@ setTimeout(function(){layout();update();},600);
    ["jack","The Classic","3.5 mm jack","For your favourite wired headphones. On the top edge, ready to plug in."],
    ["body","The Shell","Aluminium body","An aluminium body made to fit a pocket. 56 x 118 x 19.5 mm."]
   ];
+  var SIZE={keys:"70%",dial:"64%",pi:"62%",sim:"56%",speaker:"54%"};
   var grid=document.getElementById("crewGrid"); if(!grid)return;
   CREW.forEach(function(m,i){
     var card=document.createElement("article"); card.className="card rv";
     card.style.transitionDelay=((i%5)*60)+"ms";
     var tile=document.createElement("div"); tile.className="tile";
     var cv2=document.createElement("canvas"); cv2.setAttribute("role","img"); cv2.setAttribute("aria-label",m[2]+" as a pixel sprite");
-    var rowsS=SP[m[0]], n=rowsS.length; cv2.width=n; cv2.height=n; if(n>12)cv2.style.width="86%";
+    var rowsS=SP[m[0]], n=rowsS.length; cv2.width=n; cv2.height=n; if(SIZE[m[0]])cv2.style.width=SIZE[m[0]];
     var g=cv2.getContext("2d");
     for(var y=0;y<n;y++)for(var x=0;x<n;x++){var ch=rowsS[y].charAt(x); if(COL[ch]){g.fillStyle=COL[ch];g.fillRect(x,y,1,1);}}
     tile.appendChild(cv2); card.appendChild(tile);
