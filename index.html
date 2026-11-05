@@ -223,6 +223,89 @@ html.pxc,html.pxc *{cursor:none!important}
 }
 
 
+/* ---------- Build log: the screen pins and only the timeline moves. The spine runs on the section's 12-column grid ---------- */
+.join{overflow:clip}
+.log{position:relative;margin:clamp(64px,12vh,140px) calc(var(--gutter-r) * -1) 0 calc(var(--gutter-l) * -1)}
+.log-pin{position:sticky;top:0;height:100vh;height:100svh;display:flex;flex-direction:column}
+.log-head{flex:none;padding:18px var(--gutter-r) clamp(14px,2.6vh,28px) var(--gutter-l)}
+.log-top{display:flex;justify-content:space-between;gap:16px;color:var(--muted);margin-bottom:clamp(10px,2vh,22px)}
+.log-title{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,34ch);gap:24px;align-items:end}
+.join .log h2{margin:0;font-weight:400;font-size:clamp(42px,min(8vw,15vh),128px);line-height:.92;letter-spacing:-.035em}
+.log-title p{margin:0;color:var(--crew-muted);font-size:15px;max-width:34ch}
+.log-stage{position:relative;flex:1;min-height:0;border-top:1px solid var(--crew-line)}
+.log-read{position:absolute;z-index:1;left:var(--gutter-l);top:18px;width:calc(25% - var(--gutter-l) - 12px);pointer-events:none}
+.log-read>b{display:block;font-family:var(--f-dot);font-weight:700;font-size:clamp(40px,5.4vw,84px);line-height:.92;letter-spacing:.01em}
+.log-read>small{display:block;margin-top:8px;color:var(--muted)}
+.log-read .count{display:block;margin-top:clamp(12px,2.4vh,24px)}
+.log-view{position:absolute;inset:0;overflow:hidden;overflow:clip}
+.log-track{position:relative;padding-bottom:clamp(20px,5vh,48px);will-change:transform}
+.log-past{position:relative}
+.log-spine{position:absolute;z-index:1;left:calc(100% / 12 * 3 - 1px);top:0;width:1px;height:100%;background:rgba(22,22,21,.28);pointer-events:none}
+.log-spine i{display:block;position:absolute;left:-1px;top:0;width:3px;height:100%;background:var(--orange);transform-origin:0 0;transform:scaleY(0);will-change:transform}
+.log-day{position:relative;display:grid;grid-template-columns:25% minmax(0,1fr)}
+.log-past .log-items{border-top:1px solid rgba(22,22,21,.3)}
+.log-day.is-next::before{content:"";position:absolute;left:calc(25% - 1px);top:0;bottom:0;width:1px;background:repeating-linear-gradient(to bottom,rgba(22,22,21,.5) 0 3px,transparent 3px 7px)}
+.log-date{position:absolute;width:1px;height:1px;margin:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.log-items{grid-column:2;list-style:none;margin:0;padding:0}
+.log-item{position:relative;display:grid;grid-template-columns:2fr 1fr;padding-block:22px 28px;transition:background .18s steps(2)}
+.log-item+.log-item{border-top:1px solid var(--crew-line)}
+.log-item.is-active{background:var(--crew-hover)}
+.log-item::before{content:"";position:absolute;z-index:2;left:-5px;top:27px;width:9px;height:9px;background:var(--paper);border:1px solid var(--fg);transition:background .18s steps(2),border-color .18s steps(2)}
+.log-item.on::before{background:var(--orange);border-color:var(--orange)}
+.log-item.is-active::before{left:-7px;top:25px;width:13px;height:13px;background:var(--orange);border-color:var(--orange)}
+.is-now .log-item::before{background:var(--orange);border-color:var(--orange);animation:blink 1.2s steps(2) infinite}
+.log-main{padding-inline:clamp(18px,2vw,30px) 24px;min-width:0}
+.log-t{margin:0;font-size:clamp(20px,2vw,28px);font-weight:500;letter-spacing:-.02em;line-height:1.1;text-wrap:balance}
+.log-b{margin:8px 0 0;font-size:15px;color:var(--crew-muted);line-height:1.45;max-width:58ch;text-wrap:pretty}
+.log-rows{margin-top:14px;max-width:44ch;display:flex;flex-direction:column;gap:5px}
+.log-rows .prow{font-size:11px}
+.log-meta{display:flex;align-items:flex-start;gap:14px;padding-inline:14px var(--gutter-r);min-width:0}
+.log-meta .tile{flex:none;width:clamp(56px,5.4vw,84px)}
+.log-tag{display:flex;flex-direction:column;gap:4px;color:var(--muted)}
+.log-k.hw{color:#b8431a}
+.log-st{display:block;padding-inline:14px var(--gutter-r);padding-top:6px;align-self:start}
+.log-state .log-t{padding-inline:clamp(18px,2vw,30px) 24px}
+.log-st.wip{color:#b8431a}
+.log-st.next{color:var(--muted)}
+.log-static .log-pin{position:static;height:auto}
+.log-static .log-stage{flex:none}
+.log-static .log-view{position:static;overflow:visible}
+.log-static .log-item.is-active{background:none}
+.join-log a{color:var(--fg);text-decoration:none;box-shadow:inset 0 -1px 0 var(--orange)}
+.join-log a:hover{color:var(--orange-deep)}
+@media (prefers-reduced-motion:no-preference){.log-item.is-active .tile canvas{animation:hop .45s steps(2) 2}}
+@media (prefers-reduced-motion:reduce){.is-now .log-item::before{animation:none}}
+@media (max-width:859px){
+  .log-title{grid-template-columns:minmax(0,1fr);gap:8px}
+  .join .log h2{font-size:clamp(38px,min(11vw,7vh),56px)}
+  .log-title p{font-size:14px;max-width:none}
+  .log-stage{display:flex;flex-direction:column}
+  .log-read{position:static;width:auto;display:flex;align-items:baseline;gap:10px;padding:10px var(--gutter-r) 10px calc(100% / 12 + 14px);border-bottom:1px solid var(--crew-line)}
+  .log-read>b{font-size:38px}
+  .log-read>small{margin-top:0}
+  .log-read .count{margin:0 0 0 auto;font-size:22px}
+  .log-view{position:relative;inset:auto;flex:1;min-height:0}
+  .log-spine{left:calc(100% / 12 - 1px)}
+  .log-day{grid-template-columns:minmax(0,1fr)}
+  .log-day.is-next::before{left:calc(100% / 12 - 1px)}
+  .log-items{grid-column:auto}
+  .log-item{grid-template-columns:minmax(0,1fr) 52px;column-gap:12px;grid-template-areas:"tag tile" "t tile" "b b" "r r";padding:16px var(--gutter-r) 22px calc(100% / 12 + 14px)}
+  .log-item::before{left:calc(100% / 12 - 5px);top:19px}
+  .log-item.is-active::before{left:calc(100% / 12 - 7px);top:17px}
+  .log-main,.log-meta{display:contents}
+  .log-meta .tile{grid-area:tile;width:52px;align-self:start}
+  .log-tag{grid-area:tag;flex-direction:row;gap:10px;margin-bottom:8px}
+  .log-t{grid-area:t}
+  .log-b{grid-area:b}
+  .log-rows{grid-area:r}
+  .log-state{grid-template-columns:minmax(0,1fr);grid-template-areas:"st" "t"}
+  .log-state .log-t{padding-inline:0}
+  .log-st{grid-area:st;padding:0 0 6px}
+}
+@media (max-width:859px) and (max-height:700px){.log-title p{display:none}}
+@media (max-width:359px){.top nav{gap:8px;letter-spacing:.02em}}
+
+
 /* ---------- Tilt: the player rises from a low angle, copy lights up word by word ---------- */
 .tilt{position:relative;height:300vh;background:var(--studio-bg);color:#ecebe6}
 .tilt-pin{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;background:var(--studio-bg);isolation:isolate}
@@ -301,7 +384,7 @@ html.pxc,html.pxc *{cursor:none!important}
 <header class="hero" id="top">
   <div class="top">
     <a class="brand" href="#top">JF-1</a>
-    <nav class="mono" aria-label="Sections"><a href="#inside">Inside</a><a href="#crew">Crew</a><a href="#specs">Specs</a><a href="#join">Waitlist</a></nav>
+    <nav class="mono" aria-label="Sections"><a href="#inside">Inside</a><a href="#crew">Crew</a><a href="#specs">Specs</a><a href="#join">Waitlist</a><a href="#log">Log</a></nav>
   </div>
 
   <div class="hero-head">
@@ -429,11 +512,30 @@ html.pxc,html.pxc *{cursor:none!important}
     <aside class="join-upd" aria-label="Prototype updates">
       <h3>Prototype status</h3>
       <div class="pbar" id="pbar" role="img"></div>
-      <div class="pmeta mono"><span id="pPct"></span><span>Updated 05.11.2026</span></div>
+      <div class="pmeta mono"><span id="pPct"></span><span id="pUpd"></span></div>
       <div id="pRows"></div>
       <ul class="join-log mono" id="pLog"></ul>
     </aside>
   </div>
+  <section class="log" id="log" aria-labelledby="logTitle">
+    <div class="log-pin" id="logPin">
+      <div class="log-head">
+        <div class="log-top mono rv"><span>JF-1 / Build log</span><span id="logMeta"></span></div>
+        <div class="log-title">
+          <h2 id="logTitle" class="rv">Build log.</h2>
+          <p class="rv">Every update and every change to JF-1, on one line. Newest first, with what comes next at the top.</p>
+        </div>
+      </div>
+      <div class="log-stage">
+        <div class="log-read" aria-hidden="true"><b id="logDay"></b><small class="mono" id="logSub"></small><span class="count"><span id="logNo"></span><small id="logTotal"></small></span></div>
+        <div class="log-view" id="logView">
+          <div class="log-track" id="logTrack">
+            <div class="log-past" id="logPast"><span class="log-spine" id="logSpine" aria-hidden="true"><i id="logFill"></i></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
   <p class="join-mark" aria-hidden="true">JF<span>-</span>1</p>
   <div class="foot mono"><span>JF-1 &middot; Prototype</span><span>Built in Switzerland, 2026</span></div>
 </section>
@@ -643,7 +745,7 @@ function edgeSprite(w,h,color,hs,vs){
 }
 
 /* ================= Scroll sequence ================= */
-var syncBars=function(){};
+var syncBars=function(){}, spriteCanvas=function(){return document.createElement("canvas");};
 var N=120, imgs=new Array(N), seq=document.getElementById("seq"), sx=seq.getContext("2d",{alpha:false}), STAGE=css("--stage"), seqEdges=null;
 function src(i){return "frames/f_"+String(i+1).padStart(3,"0")+".webp";}
 function load(i){var im=new Image();im.decoding="async";im.src=src(i);imgs[i]=im;}
@@ -968,15 +1070,19 @@ setTimeout(function(){layout();update();},600);
    ["body","The Shell","Aluminium body","An aluminium body made to fit a pocket. 56 x 118 x 19.5 mm."]
   ];
   var SIZE={keys:"70%",dial:"64%",pi:"62%",sim:"56%",speaker:"54%"};
+  spriteCanvas=function(name){
+    var c=document.createElement("canvas"), r=SP[name], n=r.length, g=null;
+    c.width=n; c.height=n; if(SIZE[name])c.style.width=SIZE[name];
+    g=c.getContext("2d");
+    for(var y=0;y<n;y++)for(var x=0;x<n;x++){var ch=r[y].charAt(x); if(COL[ch]){g.fillStyle=COL[ch];g.fillRect(x,y,1,1);}}
+    return c;
+  };
   var grid=document.getElementById("crewGrid"); if(!grid)return;
   CREW.forEach(function(m,i){
     var card=document.createElement("article"); card.className="card rv";
     card.style.transitionDelay=((i%5)*60)+"ms";
     var tile=document.createElement("div"); tile.className="tile";
-    var cv2=document.createElement("canvas"); cv2.setAttribute("role","img"); cv2.setAttribute("aria-label",m[2]+" as a pixel sprite");
-    var rowsS=SP[m[0]], n=rowsS.length; cv2.width=n; cv2.height=n; if(SIZE[m[0]])cv2.style.width=SIZE[m[0]];
-    var g=cv2.getContext("2d");
-    for(var y=0;y<n;y++)for(var x=0;x<n;x++){var ch=rowsS[y].charAt(x); if(COL[ch]){g.fillStyle=COL[ch];g.fillRect(x,y,1,1);}}
+    var cv2=spriteCanvas(m[0]); cv2.setAttribute("role","img"); cv2.setAttribute("aria-label",m[2]+" as a pixel sprite");
     tile.appendChild(cv2); card.appendChild(tile);
     var no=document.createElement("span"); no.className="no"; no.textContent=String(i+1).padStart(2,"0");
     var h=document.createElement("h3"); h.textContent=m[1];
@@ -1129,7 +1235,25 @@ setTimeout(function(){layout();update();},600);
     ["Industrial design","done"],["CAD model","done"],["Parts ordered","done"],
     ["Printed prototype enclosure","wip"],["Jellyfin client","wip"],["First units","next"]
   ];
-  var LOG=[["05.11.","CAD v2.2 and parts list"],["Next","Printed prototype, first boot"]];
+  var NEXT="Printed prototype, first boot";
+  /* Build log, newest first. Every change gets an entry here.
+     d: date, k: Hardware | Software | Site, s: crew sprite, t: title, b: text, r: optional detail rows.
+     The status panel takes its date and latest hardware line from this list. */
+  var TIMELINE=[
+    {d:"2026-11-05",k:"Hardware",s:"body",t:"CAD v2.2 and parts list",b:"The CAD model stands at v2.2. The parts list is written and the parts are ordered.",r:[["Industrial design","Done"],["CAD model","v2.2"],["Parts","Ordered"]]},
+    {d:"2026-11-05",k:"Site",s:"display",t:"Build log opens",b:"Every update and every change to JF-1 now lives on this line, newest first."},
+    {d:"2026-11-05",k:"Site",s:"wheel",t:"Smoother tilt, touch wheel favicon",b:"The tilt shot now glides with your scroll, with more frames on phones. The touch wheel is the new favicon and home screen icon."},
+    {d:"2026-11-05",k:"Site",s:"plate",t:"Full parts render",b:"The studio section now shows every part laid out on one sheet, with a stacked version for phones."},
+    {d:"2026-11-05",k:"Site",s:"dial",t:"New pixel icons",b:"The wheel with its printed symbols, three keys for shuffle, repeat and favourite, and a sharper ESP32, speaker and microSD."},
+    {d:"2026-11-05",k:"Site",s:"jack",t:"Crew grows to twelve",b:"New cards for the 3.5 mm jack and the aluminium body, plus a short fact on every card."},
+    {d:"2026-11-05",k:"Site",s:"pi",t:"Page follows the current hardware",b:"ESP32-S3 at the core, your library offline on microSD, tempered glass on the front. Specs, crew and status all follow the new build."},
+    {d:"2026-11-03",k:"Site",s:"keys",t:"Parts numbered by position",b:"Numbers run down the left, across the top, then down the right, the same in the diagram and the crew list."},
+    {d:"2026-11-03",k:"Site",s:"glass",t:"Tuned for phones",b:"A better mobile layout, smoother scrolling and browser bars that take the colour of each section."},
+    {d:"2026-11-03",k:"Site",s:"battery",t:"The player opens as you scroll",b:"The exploded view and the tilt shot run as image sequences tied to your scroll."},
+    {d:"2026-11-03",k:"Site",s:"usb",t:"JF-1 goes online",b:"First version of this page, live at jf-1.duneify.com."}
+  ];
+  var latest=TIMELINE[0].d.split("-"), hw=TIMELINE.filter(function(e){return e.k==="Hardware";})[0], hwD=hw.d.split("-");
+  var LOG=[[hwD[2]+"."+hwD[1]+".",hw.t],["Next",NEXT]];
   /* Optional: a URL that accepts POST {email}. Empty = the form works locally only. */
   var WAITLIST_ENDPOINT="";
   var LBL={done:"Done",wip:"In progress",next:"Planned"};
@@ -1152,6 +1276,104 @@ setTimeout(function(){layout();update();},600);
   STATUS.forEach(function(r){var d=document.createElement("div");d.className="prow mono";
     d.innerHTML='<b></b><span class="ld"></span><span class="st '+r[1]+'">'+LBL[r[1]]+'</span>';d.firstChild.textContent=r[0];rowsEl.appendChild(d);});
   LOG.forEach(function(l){var li=document.createElement("li");li.innerHTML="<time></time><span></span>";li.firstChild.textContent=l[0];li.lastChild.textContent=l[1];logEl.appendChild(li);});
+  (function(){var li=document.createElement("li");li.innerHTML='<a href="#log">Full build log &darr;</a>';logEl.appendChild(li);})();
+  document.getElementById("pUpd").textContent="Updated "+latest[2]+"."+latest[1]+"."+latest[0];
+
+  /* Build log: the screen pins and only the track moves. Next steps, what is in progress, then every entry by day. */
+  (function(){
+    var log=document.getElementById("log"), pin=document.getElementById("logPin"), view=document.getElementById("logView"), track=document.getElementById("logTrack"), past=document.getElementById("logPast"), spine=document.getElementById("logSpine"), fill=document.getElementById("logFill");
+    var rDay=document.getElementById("logDay"), rSub=document.getElementById("logSub"), rNo=document.getElementById("logNo");
+    function el(tag,cls,txt){var n=document.createElement(tag);if(cls)n.className=cls;if(txt!=null)n.textContent=txt;return n;}
+    function group(cls,big,small,iso){
+      var d=el("div","log-day"+(cls?" "+cls:"")), h=el("h3","log-date"), t=el(iso?"time":"span",null,big+", "+small), ol=el("ol","log-items");
+      if(iso)t.setAttribute("datetime",iso);
+      h.appendChild(t); d.appendChild(h); d.appendChild(ol);
+      d._ol=ol; d._big=big; d._small=small; return d;
+    }
+    function state(d,name,st){
+      var li=el("li","log-item log-state");
+      li.appendChild(el("h4","log-t",name)); li.appendChild(el("span","log-st mono "+st,LBL[st]));
+      li._g=d; li._no="--"; d._ol.appendChild(li);
+    }
+    var nextD=group("is-next","Next","Coming up");
+    STATUS.forEach(function(r){if(r[1]==="next")state(nextD,r[0],"next");});
+    state(nextD,NEXT,"next");
+    track.insertBefore(nextD,past);
+    var nowD=group("is-now","Now","On the desk");
+    STATUS.forEach(function(r){if(r[1]==="wip")state(nowD,r[0],"wip");});
+    past.appendChild(nowD);
+
+    var cur=null, lastD="";
+    TIMELINE.forEach(function(e,i){
+      var q=e.d.split("-"), no=String(TIMELINE.length-i).padStart(2,"0");
+      if(e.d!==lastD){
+        lastD=e.d;
+        cur=group("",q[2]+"."+q[1],new Date(+q[0],+q[1]-1,+q[2]).toLocaleDateString("en-GB",{month:"long",year:"numeric"}),e.d);
+        past.appendChild(cur);
+      }
+      var li=el("li","log-item"), main=el("div","log-main"), meta=el("div","log-meta"), tile=el("div","tile"), tag=el("div","log-tag mono"), c=spriteCanvas(e.s);
+      c.setAttribute("aria-hidden","true"); tile.appendChild(c);
+      tag.appendChild(el("span","log-k"+(e.k==="Hardware"?" hw":""),e.k));
+      tag.appendChild(el("span","log-no","No. "+no));
+      tag.appendChild(el("span","log-d",q[2]+"."+q[1]+"."));
+      main.appendChild(el("h4","log-t",e.t)); main.appendChild(el("p","log-b",e.b));
+      if(e.r){
+        var rows=el("div","log-rows");
+        e.r.forEach(function(x){var p=el("div","prow mono");p.appendChild(el("b",null,x[0]));p.appendChild(el("span","ld"));p.appendChild(el("span","st done",x[1]));rows.appendChild(p);});
+        main.appendChild(rows);
+      }
+      meta.appendChild(tile); meta.appendChild(tag); li.appendChild(main); li.appendChild(meta);
+      li._g=cur; li._no=no; cur._ol.appendChild(li);
+    });
+    document.getElementById("logMeta").textContent="Updated "+latest[2]+"."+latest[1]+"."+latest[0];
+    document.getElementById("logTotal").textContent="/"+String(TIMELINE.length).padStart(2,"0");
+
+    /* the track follows the page 1:1 and glides over wheel steps; the playhead runs from the first node to the last */
+    var items=[].slice.call(track.querySelectorAll(".log-item")), ys=[], pastY=0, span=1, travel=0, pinned=false, curY=0, active=-1, lastT=0, running=false, inView=!("IntersectionObserver" in window);
+    function topIn(n){var y=0;while(n&&n!==track){y+=n.offsetTop;n=n.offsetParent;}return y;}
+    function target(){return Math.max(0,Math.min(travel,-log.getBoundingClientRect().top));}
+    function apply(){
+      track.style.transform=pinned?"translate3d(0,"+(-curY).toFixed(1)+"px,0)":"none";
+      var k=pinned?curY/travel:1, y=ys[0]+k*(ys[ys.length-1]-ys[0]), a=0;
+      fill.style.transform="scaleY("+Math.max(0,Math.min(1,(y-pastY)/span)).toFixed(4)+")";
+      for(var i=0;i<items.length;i++){var on=y>=ys[i]-0.5; if(on!==items[i]._a){items[i]._a=on;items[i].classList.toggle("on",on);} if(on)a=i;}
+      if(!pinned)a=0;
+      if(a===active)return;
+      if(active>=0)items[active].classList.remove("is-active");
+      items[a].classList.add("is-active"); active=a;
+      var g=items[a]._g;
+      rNo.textContent=items[a]._no;
+      if(rDay.textContent!==g._big){
+        rDay.textContent=g._big; rSub.textContent=g._small;
+        if(!reduce&&rDay.animate)rDay.animate([{opacity:.25},{opacity:1}],{duration:200,easing:"steps(3)"});
+      }
+    }
+    function frame(now){
+      var dt=Math.min(64,now-lastT), t=target(); lastT=now;
+      curY=reduce?t:curY+(t-curY)*(1-Math.exp(-dt/85));
+      if(Math.abs(t-curY)<0.3)curY=t;
+      apply();
+      if(curY!==t)requestAnimationFrame(frame); else running=false;
+    }
+    function kick(){if(pinned&&inView&&!running){running=true;lastT=performance.now();requestAnimationFrame(frame);}}
+    function measure(){
+      log.classList.remove("log-static"); log.style.height="";
+      travel=track.offsetHeight-view.clientHeight;
+      pinned=travel>0&&window.innerHeight>=460;
+      log.classList.toggle("log-static",!pinned);
+      if(pinned)log.style.height=(pin.offsetHeight+travel)+"px";
+      var dot=window.innerWidth<860?23:31;
+      ys=items.map(function(n){return topIn(n)+dot;});
+      pastY=topIn(past); span=Math.max(1,ys[ys.length-1]-pastY); spine.style.height=span+"px";
+      curY=pinned?target():0;
+      apply();
+    }
+    window.addEventListener("scroll",kick,{passive:true});
+    if("IntersectionObserver" in window)new IntersectionObserver(function(e){inView=e[0].isIntersecting;kick();},{rootMargin:"25% 0px"}).observe(log);
+    onResize(measure); window.addEventListener("load",measure);
+    if(document.fonts&&document.fonts.ready)document.fonts.ready.then(measure);
+    measure();
+  })();
 
   /* mosaic in the black panel */
   var cv=document.getElementById("joinCv"), g=cv.getContext("2d"), CS=10, cols=0, rows=0, W=0, H=0, dp=1, sp=null, heart=false, vis=false, last=0, hC2=null, nC2=null, nT=-1, shade=null;
