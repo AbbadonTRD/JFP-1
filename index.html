@@ -1240,6 +1240,7 @@ setTimeout(function(){layout();update();},600);
      d: date, k: Hardware | Software | Site, s: crew sprite, t: title, b: text, r: optional detail rows.
      The status panel takes its date and latest hardware line from this list. */
   var TIMELINE=[
+    {d:"2026-11-05",k:"Site",s:"sim",t:"Build log holds to the end",b:"The timeline stays pinned until its last entry has settled, then rests for a moment before the page moves on. Fast scrolling included."},
     {d:"2026-11-05",k:"Hardware",s:"body",t:"CAD v2.2 and parts list",b:"The CAD model stands at v2.2. The parts list is written and the parts are ordered.",r:[["Industrial design","Done"],["CAD model","v2.2"],["Parts","Ordered"]]},
     {d:"2026-11-05",k:"Site",s:"display",t:"Build log opens",b:"Every update and every change to JF-1 now lives on this line, newest first."},
     {d:"2026-11-05",k:"Site",s:"wheel",t:"Smoother tilt, touch wheel favicon",b:"The tilt shot now glides with your scroll, with more frames on phones. The touch wheel is the new favicon and home screen icon."},
@@ -1328,15 +1329,17 @@ setTimeout(function(){layout();update();},600);
     document.getElementById("logMeta").textContent="Updated "+latest[2]+"."+latest[1]+"."+latest[0];
     document.getElementById("logTotal").textContent="/"+String(TIMELINE.length).padStart(2,"0");
 
-    /* the track follows the page 1:1 and glides over wheel steps; the playhead runs from the first node to the last */
-    var items=[].slice.call(track.querySelectorAll(".log-item")), ys=[], pastY=0, span=1, travel=0, pinned=false, curY=0, active=-1, lastT=0, running=false, inView=!("IntersectionObserver" in window);
+    /* the track follows the page 1:1 and glides over wheel steps; the playhead runs from the first node to the last.
+       After the last entry the screen stays pinned for half a screen (hold), so the end is seen standing still. */
+    var items=[].slice.call(track.querySelectorAll(".log-item")), ys=[], pastY=0, span=1, travel=0, hold=0, pinned=false, curY=0, active=-1, lastT=0, running=false, inView=!("IntersectionObserver" in window);
     function topIn(n){var y=0;while(n&&n!==track){y+=n.offsetTop;n=n.offsetParent;}return y;}
-    function target(){return Math.max(0,Math.min(travel,-log.getBoundingClientRect().top));}
+    function scrolled(){return -log.getBoundingClientRect().top;}
+    function target(s){return Math.max(0,Math.min(travel,s));}
     function apply(){
       track.style.transform=pinned?"translate3d(0,"+(-curY).toFixed(1)+"px,0)":"none";
       var k=pinned?curY/travel:1, y=ys[0]+k*(ys[ys.length-1]-ys[0]), a=0;
       fill.style.transform="scaleY("+Math.max(0,Math.min(1,(y-pastY)/span)).toFixed(4)+")";
-      for(var i=0;i<items.length;i++){var on=y>=ys[i]-0.5; if(on!==items[i]._a){items[i]._a=on;items[i].classList.toggle("on",on);} if(on)a=i;}
+      for(var i=0;i<items.length;i++){var on=y>=ys[i]-2; if(on!==items[i]._a){items[i]._a=on;items[i].classList.toggle("on",on);} if(on)a=i;}
       if(!pinned)a=0;
       if(a===active)return;
       if(active>=0)items[active].classList.remove("is-active");
@@ -1349,8 +1352,10 @@ setTimeout(function(){layout();update();},600);
       }
     }
     function frame(now){
-      var dt=Math.min(64,now-lastT), t=target(); lastT=now;
+      var dt=Math.min(64,now-lastT), s=scrolled(), t=target(s), room=Math.max(0,Math.min(s,travel+hold-s)); lastT=now;
       curY=reduce?t:curY+(t-curY)*(1-Math.exp(-dt/85));
+      /* never trail by more than the scroll left before the pin lets go, so a fast scroll cannot carry the track past the release */
+      curY=Math.max(t-room,Math.min(t+room,curY));
       if(Math.abs(t-curY)<0.3)curY=t;
       apply();
       if(curY!==t)requestAnimationFrame(frame); else running=false;
@@ -1361,11 +1366,12 @@ setTimeout(function(){layout();update();},600);
       travel=track.offsetHeight-view.clientHeight;
       pinned=travel>0&&window.innerHeight>=460;
       log.classList.toggle("log-static",!pinned);
-      if(pinned)log.style.height=(pin.offsetHeight+travel)+"px";
+      hold=pinned?Math.round(pin.offsetHeight*0.5):0;
+      if(pinned)log.style.height=(pin.offsetHeight+travel+hold)+"px";
       var dot=window.innerWidth<860?23:31;
       ys=items.map(function(n){return topIn(n)+dot;});
       pastY=topIn(past); span=Math.max(1,ys[ys.length-1]-pastY); spine.style.height=span+"px";
-      curY=pinned?target():0;
+      curY=pinned?target(scrolled()):0;
       apply();
     }
     window.addEventListener("scroll",kick,{passive:true});
