@@ -8,6 +8,9 @@
 <meta property="og:description" content="A pocket player for your Jellyfin library.">
 <meta property="og:image" content="https://jf-1.duneify.com/hero-zoom.webp">
 <meta name="theme-color" content="#cbcbca">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>:root{color-scheme:light}body{margin:0;font-family:system-ui,sans-serif;font-size:14px}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>JF-1 Player</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -226,12 +229,13 @@ html.pxc,html.pxc *{cursor:none!important}
 .tilt-copy{position:relative;z-index:2;text-align:center;padding:clamp(56px,11vh,120px) var(--gutter-r) 0 var(--gutter-l);will-change:transform}
 .tilt-copy .eyebrow{display:block;color:var(--orange);margin-bottom:14px}
 .tilt-copy h2{margin:0;font-weight:400;font-size:clamp(40px,6.4vw,104px);line-height:.92;letter-spacing:-.035em;text-transform:uppercase;text-wrap:balance}
-.tilt-p{margin:clamp(16px,3vh,28px) auto 0;max-width:52ch;font-size:clamp(15px,1.25vw,19px);line-height:1.5;text-wrap:pretty}
-.tilt-p .w{color:#4f4e4a;transition:color .25s ease}
+.tilt-p{margin:clamp(16px,3vh,28px) auto 0;max-width:52ch;font-size:clamp(15px,1.25vw,19px);line-height:1.5;text-wrap:pretty;will-change:opacity}
+.tilt-p .w{color:#4f4e4a}
 .tilt-p .w.on{color:#b9b7af}
 .tilt-p .w.k{font-weight:500}
 .tilt-p .w.k.on{color:#f4f3ee}
-#tiltCv{position:absolute;left:50%;bottom:-4svh;transform:translateX(-50%);width:min(100vw,calc(64svh * 16 / 9));aspect-ratio:16/9;max-width:100%;display:block;z-index:1}
+.tilt-edge{pointer-events:none}
+#tiltCv,.tilt-edge{position:absolute;left:50%;bottom:-4svh;transform:translateX(-50%);width:min(100vw,calc(64svh * 16 / 9));aspect-ratio:16/9;max-width:100%;display:block;z-index:1}
 .tilt-feat{position:absolute;z-index:2;bottom:clamp(90px,22vh,240px);width:min(230px,24vw);opacity:0;transform:translateY(14px);transition:opacity .6s ease,transform .6s cubic-bezier(.2,.7,.2,1)}
 .tilt-feat.in{opacity:1;transform:none}
 .tilt-feat.l{left:max(var(--gutter-l),calc(50% - min(48vw,calc(64svh * 16 / 9) / 2) + 2vw));text-align:left}
@@ -243,8 +247,7 @@ html.pxc,html.pxc *{cursor:none!important}
   .tilt{height:360vh}
   .tilt-copy{padding-top:clamp(36px,8svh,72px)}
   .tilt-copy h2{font-size:min(40px,11.4vw)}
-  .tilt-p{font-size:16px;will-change:opacity}
-  .tilt-p .w{transition:none}
+  .tilt-p{font-size:16px}
   /* size and position come from the script: the device stays large once it stands upright */
   #tiltCv{left:0;top:0;bottom:auto;transform:none;transform-origin:0 0;aspect-ratio:auto;max-width:none;will-change:transform}
   .tilt-feat{bottom:max(14px,env(safe-area-inset-bottom,0px));width:calc(50vw - 24px)}
@@ -604,7 +607,7 @@ sizeMosaic(); requestAnimationFrame(loop);
 /* ================= Decoded frames: decode() ahead of the playhead, so drawImage never decodes a webp mid-scroll.
    The browser owns the decoded memory: closing ImageBitmaps while scrubbing crashed the renderer. ================= */
 function decodedWindow(imgs,R,onReady){
-  var N=imgs.length, ready=new Array(N), busy=new Array(N), at=-1, can=!!(window.Image&&Image.prototype.decode), running=0, MAX=coarse?2:4;
+  var N=imgs.length, ready=new Array(N), busy=new Array(N), at=-1, dir=1, can=!!(window.Image&&Image.prototype.decode), running=0, MAX=coarse?2:4;
   function start(i){
     var im=imgs[i]; if(running>=MAX||i<0||i>=N||ready[i]||busy[i]||!im||!im.complete||!im.naturalWidth)return;
     busy[i]=true; running++;
@@ -614,10 +617,11 @@ function decodedWindow(imgs,R,onReady){
       pump();
     }).catch(function(){busy[i]=false;running--;can=false;});
   }
-  function pump(){if(!can||at<0)return;for(var d=0;d<=R&&running<MAX;d++){start(at+d);if(d)start(at-d);}}
+  /* most of the window lies ahead of the direction of travel, so the next frame is ready before it is needed */
+  function pump(){if(!can||at<0)return;for(var d=0;d<=R&&running<MAX;d++){start(at+dir*d);if(d&&d<=3)start(at-dir*d);}}
   return {
     touch:function(f,force){
-      var a=Math.round(f); if(a===at&&!force)return; at=a;
+      var a=Math.round(f); if(a===at&&!force)return; if(a!==at&&at>=0)dir=a>at?1:-1; at=a;
       for(var i=0;i<N;i++){if(ready[i]&&Math.abs(i-a)>R+4)ready[i]=false;}
       pump();
     },
@@ -771,7 +775,7 @@ setTimeout(function(){layout();update();},600);
     arrow:parse(["......FE...","......FFE..","FFFFFFFFFE.","FFFFFFFFFFE","FFFFFFFFFE.","......FFE..","......FE..."])
   };
   var MAP={top:"blob",inside:"dot",crew:"heart",specs:"blob",studio:"blob",outro:"blob",tilt:"dot",listen:"blob",zoom:"dot",foot:"blob",join:"heart"};
-  var heads=null, mode="blob", prevMode="blob", morph=1, mx=-1, my=-1, fx=-1, fy=-1, inside=false, moved=true, lastNow=0;
+  var heads=null, mode="blob", prevMode="blob", morph=1, mx=-1, my=-1, fx=-1, fy=-1, inside=false, moved=true, lastNow=0, lastScroll=0;
   var ang=0, tgtAng=0, near=false, vx=0, vy=0, sats=[], lastSat=0;
   /* full-screen layer: 1x backing store (pixel art, stays crisp via image-rendering) and an active-cell list instead of scanning the grid */
   function size(){dp=1;vw=window.innerWidth;vh=window.innerHeight;c.width=vw;c.height=vh;cols=Math.ceil(vw/CS)+1;rows=Math.ceil(vh/CS)+1;trail=new Float32Array(cols*rows);act=[];}
@@ -808,7 +812,7 @@ setTimeout(function(){layout();update();},600);
     if(want!==mode){if(want==="arrow")ang=tgtAng;prevMode=mode;mode=want;morph=reduce?1:0;}
   }
   window.addEventListener("pointermove",function(e){inside=true;mx=e.clientX;my=e.clientY;if(fx<0){fx=mx+14;fy=my+14;}moved=true;},{passive:true});
-  window.addEventListener("scroll",function(){moved=true;},{passive:true});
+  window.addEventListener("scroll",function(){moved=true;lastScroll=performance.now();},{passive:true});
   function out(){inside=false;fx=-1;}
   document.addEventListener("mouseleave",out); window.addEventListener("blur",out);
   var FILL=[pal.orange,pal.soft,pal.deep,pal.orange,pal.soft,"#f3c27a"], EDGE=["#1b1b1a","#4b4b4a","#1b1b1a"];
@@ -838,8 +842,8 @@ setTimeout(function(){layout();update();},600);
     /* nothing on screen and nothing to draw: leave the layer untouched */
     if(fx<0&&!inside){if(drew){g.setTransform(dp,0,0,dp,0,0);g.clearRect(0,0,vw,vh);drew=false;}return;}
     g.setTransform(dp,0,0,dp,0,0); g.clearRect(0,0,vw,vh); drew=true;
-    /* layout reads are throttled: ten checks a second are plenty for a shape change */
-    if((moved||mode==="arrow")&&now-lastDecide>100){moved=false;lastDecide=now;decide();}
+    /* layout reads are throttled, and wait for scrolling to pause so they never interrupt it */
+    if((moved||mode==="arrow")&&now-lastDecide>100&&now-lastScroll>140){moved=false;lastDecide=now;decide();}
     /* gentle idle float so it never sits completely still */
     var flx=reduce?0:Math.sin(now/620)*2.6, fly=reduce?0:Math.cos(now/740)*2.2;
     var tx=mx+14+flx, ty=my+14+fly, ox=fx, oy=fy;
@@ -1201,7 +1205,7 @@ setTimeout(function(){layout();update();},600);
 /* ================= Tilt: scroll scrubs the rise, copy lights up word by word ================= */
 (function(){
   var sec=document.getElementById("tilt"); if(!sec)return;
-  var N=window.innerWidth<860?70:140, imgs=new Array(N), started=false, cv=document.getElementById("tiltCv"), g=cv.getContext("2d",{alpha:false}), bg=css("--studio-bg"), edges=null, edgesM=null, tiltOn=true, dec=null, drewT=false, isM=false, M=null;
+  var N=window.innerWidth<860?100:140, imgs=new Array(N), started=false, cv=document.getElementById("tiltCv"), g=cv.getContext("2d",{alpha:false}), bg=css("--studio-bg"), edges=null, edgesM=null, tiltOn=true, dec=null, drewT=false, isM=false, M=null;
   var pin=sec.querySelector(".tilt-pin"), title=document.getElementById("tiltTitle");
   var copy=document.getElementById("tiltCopy"), P=document.getElementById("tiltP"), fl=document.getElementById("featL"), fr=document.getElementById("featR");
   /* split the paragraph into words, keep the bold phrases as key words */
@@ -1223,11 +1227,11 @@ setTimeout(function(){layout();update();},600);
     for(var y=0;y<12;y++)for(var i=0;i<12;i++){var ch=r[y].charAt(i);if(COL[ch]){x.fillStyle=COL[ch];x.fillRect(i,y,1,1);}}});
   function load(){if(started)return;started=true;
     for(var i=0;i<N;i++){var im=new Image();im.decoding="async";im.src="tilt/t_"+String(Math.round(i*139/(N-1))+1).padStart(3,"0")+".webp";imgs[i]=im;im.addEventListener("load",function(){if(tiltOn)dec.touch(lastF<0?0:lastF,true);});if(i===0)im.onload=function(){render(true);};}
-    dec=decodedWindow(imgs,coarse?5:10,function(i){var a=Math.floor(lastF);if(i===a||i===a+1)render(true);});}
+    dec=decodedWindow(imgs,coarse?8:20,function(i){var a=Math.floor(lastF);if(i===a||i===a+1)render(true);});}
   if("IntersectionObserver" in window)new IntersectionObserver(function(e){tiltOn=e[0].isIntersecting;if(tiltOn)load();else if(dec)dec.release();},{rootMargin:"150% 0px"}).observe(sec); else load();
   function get(i){for(var k=Math.max(0,Math.min(N-1,i));k>=0;k--){var im=imgs[k];if(im&&im.complete&&im.naturalWidth)return im;}return null;}
   function sm(x){x=Math.max(0,Math.min(1,x));return x*x*(3-2*x);}
-  var lastF=-1, lastLit=-1, cur=0, tgt=0, ticking=false;
+  var lastF=-1, lastLit=-1, curP=0, lastT=0, ticking=false, edgeEl=null;
   /* geometry of the device inside the upright last frame, as fractions of the frame */
   var DEV_W=0.242, DEV_H=0.789, DEV_TOP=0.085;
   function size(){
@@ -1248,15 +1252,18 @@ setTimeout(function(){layout();update();},600);
       cv.width=w;cv.height=Math.round(w*9/16);lastF=-1;edgesM=isM;
       /* phones: frames share the section colour and the screen clips them, so only landscape (frame narrower than the screen) needs the fade */
       edges=(!isM||M.fade)?edgeSprite(cv.width,cv.height,bg,[[0.02,0],[0.18,1],[0.82,1],[0.98,0]],isM?[[0,0],[0.05,1],[0.92,1],[1,0]]:[[0,0],[0.18,1],[0.80,1],[0.99,0]]):null;
+      /* desktop: the fade sits above the canvas as its own static layer and is never redrawn */
+      if(edgeEl){edgeEl.remove();edgeEl=null;}
+      if(!isM&&edges){edgeEl=edges;edges=null;edgeEl.className="tilt-edge";cv.parentNode.insertBefore(edgeEl,cv.nextSibling);}
       g.fillStyle=bg; g.fillRect(0,0,cv.width,cv.height); drewT=false;
     }
   }
   var lastPt=-1, lastShow=null;
   /* style writes are skipped while the value holds still */
   function setStyle(el,prop,v){var o=el._st||(el._st={});if(o[prop]!==v){o[prop]=v;el.style[prop]=v;}}
+  function readP(){return Math.max(0,Math.min(1,-sec.getBoundingClientRect().top/((sec.offsetHeight-window.innerHeight)||1)));}
   function render(force){
-    var vh=window.innerHeight, r=sec.getBoundingClientRect(), total=sec.offsetHeight-vh;
-    var p=Math.max(0,Math.min(1,-r.top/(total||1)));
+    var p=curP;
     /* phone: the copy is read first and fades out, only then does the device rise into its place */
     var t=isM?sm((p-0.4)/0.45):sm(p/0.85), f=t*(N-1);
     if(dec&&tiltOn)dec.touch(f);
@@ -1268,15 +1275,11 @@ setTimeout(function(){layout();update();},600);
         var im=(dec&&dec.near(fi))||((dec&&dec.can()&&drewT)?null:get(fi));
         if(im){drewT=true;g.drawImage(im,0,0,cv.width,cv.height);if(edges)g.drawImage(edges,0,0);}
       }
-    }else if(force||Math.abs(f-lastF)>0.01){lastF=f;
+    }else if(force||Math.abs(f-lastF)>0.04){var fast=Math.abs(f-lastF)>0.6;lastF=f;
       var a=Math.floor(f), b2=Math.min(N-1,a+1), fr2=f-a, ia=(dec&&dec.near(a))||((dec&&dec.can()&&drewT)?null:get(a)), ib=dec?dec.get(b2):null;
-      if(ia||!drewT){
-        g.globalAlpha=1; g.globalCompositeOperation="source-over"; g.fillStyle=bg; g.fillRect(0,0,cv.width,cv.height);
-        if(ia){drewT=true;g.drawImage(ia,0,0,cv.width,cv.height);
-          if(ib&&ib!==ia&&fr2>0.02){g.globalAlpha=fr2;g.drawImage(ib,0,0,cv.width,cv.height);g.globalAlpha=1;}
-          /* same result as mix-blend-mode:lighten on the section colour */
-          g.globalCompositeOperation="lighten"; g.fillRect(0,0,cv.width,cv.height); g.globalCompositeOperation="source-over";}
-        if(edges)g.drawImage(edges,0,0);
+      /* frames are opaque and share the section colour, so no fill or blend is needed; while moving fast one frame is enough */
+      if(ia){drewT=true;g.drawImage(ia,0,0,cv.width,cv.height);
+        if(!fast&&ib&&ib!==ia&&fr2>0.04){g.globalAlpha=fr2;g.drawImage(ib,0,0,cv.width,cv.height);g.globalAlpha=1;}
       }}
     var lit=Math.round(words.length*sm((p+0.04)/(isM?0.42:0.6)));
     if(lit!==lastLit){for(var i=Math.max(0,Math.min(lit,lastLit));i<Math.max(lit,lastLit);i++)words[i].classList.toggle("on",i<lit);lastLit=lit;}
@@ -1288,10 +1291,16 @@ setTimeout(function(){layout();update();},600);
     }else setStyle(copy,"transform","translate3d(0,"+(-p*8).toFixed(2)+"vh,0)");
     var show=p>(isM?0.84:0.74); if(show!==lastShow){lastShow=show;fl.classList.toggle("in",show);fr.classList.toggle("in",show);}
   }
-  function loop(){var d=tgt-cur; if(reduce||Math.abs(d)<0.0005){cur=tgt;}else cur+=d*0.25; render(false); if(cur!==tgt)requestAnimationFrame(loop); else ticking=false;}
-  window.addEventListener("scroll",function(){tgt=window.scrollY;if(!ticking){ticking=true;requestAnimationFrame(loop);}},{passive:true});
-  onResize(function(){size();render(true);});
-  size(); render(true);
+  /* the frames glide towards the scroll position, so a wheel notch never jumps several frames at once; same speed at any refresh rate */
+  function loop(now){
+    var tp=readP(), d=tp-curP, dt=Math.min(50,now-lastT); lastT=now;
+    if(reduce||!tiltOn||Math.abs(d)<0.0003)curP=tp; else curP+=d*(1-Math.exp(-dt/85));
+    render(false);
+    if(curP!==tp)requestAnimationFrame(loop); else ticking=false;
+  }
+  window.addEventListener("scroll",function(){if(!ticking){ticking=true;lastT=performance.now();requestAnimationFrame(loop);}},{passive:true});
+  onResize(function(){size();curP=readP();render(true);});
+  size(); curP=readP(); render(true);
 })();
 
 /* ================= Browser bars: address bar and status area take the colour of the section at that screen edge.
