@@ -991,8 +991,8 @@ setTimeout(function(){layout();update();},600);
 /* ================= Studio: photo as a curved dot-matrix screen that flattens while pinned ================= */
 (function(){
   var sec=document.getElementById("studio"); if(!sec)return;
-  /* Placeholder until the real photo arrives: swap this one path. */
-  var PHOTO_SRC="frames/f_120.webp";
+  /* All parts laid out; phones get the stacked version, the wide one would only show its middle. */
+  var PHOTO_SRC=window.innerWidth<860?"parts-render-tall.webp":"parts-render.webp";
   var cv=document.getElementById("crt"), copy=document.getElementById("studioCopy"), outro=document.getElementById("outro");
   var img=new Image(), ready=false, W=0, H=0, dp=1;
   var gl=null; try{gl=cv.getContext("webgl",{antialias:false,premultipliedAlpha:false});}catch(e){gl=null;}
