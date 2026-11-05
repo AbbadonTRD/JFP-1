@@ -247,7 +247,7 @@ html.pxc,html.pxc *{cursor:none!important}
 .log-day.is-next::before{content:"";position:absolute;left:calc(25% - 1px);top:0;bottom:0;width:1px;background:repeating-linear-gradient(to bottom,rgba(22,22,21,.5) 0 3px,transparent 3px 7px)}
 .log-date{position:absolute;width:1px;height:1px;margin:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .log-items{grid-column:2;list-style:none;margin:0;padding:0}
-.log-item{position:relative;display:grid;grid-template-columns:2fr 1fr;padding-block:22px 28px;transition:background .18s steps(2)}
+.log-item{position:relative;display:grid;grid-template-columns:2fr 1fr;padding-block:22px 28px;transition:background .32s ease}
 .log-item+.log-item{border-top:1px solid var(--crew-line)}
 .log-item.is-active{background:var(--crew-hover)}
 .log-item::before{content:"";position:absolute;z-index:2;left:-5px;top:27px;width:9px;height:9px;background:var(--paper);border:1px solid var(--fg);transition:background .18s steps(2),border-color .18s steps(2)}
@@ -1240,7 +1240,7 @@ setTimeout(function(){layout();update();},600);
      d: date, k: Hardware | Software | Site, s: crew sprite, t: title, b: text, r: optional detail rows.
      The status panel takes its date and latest hardware line from this list. */
   var TIMELINE=[
-    {d:"2026-11-05",k:"Site",s:"sim",t:"Build log holds to the end",b:"The timeline stays pinned until its last entry has settled, then rests for a moment before the page moves on. Fast scrolling included."},
+    {d:"2026-11-05",k:"Site",s:"sim",t:"Build log holds to the end",b:"The timeline stays pinned until its last entry has settled, then rests for a moment before the page moves on. The last entry lights up while the line is still moving, and the highlight fades from row to row. Fast scrolling included."},
     {d:"2026-11-05",k:"Hardware",s:"body",t:"CAD v2.2 and parts list",b:"The CAD model stands at v2.2. The parts list is written and the parts are ordered.",r:[["Industrial design","Done"],["CAD model","v2.2"],["Parts","Ordered"]]},
     {d:"2026-11-05",k:"Site",s:"display",t:"Build log opens",b:"Every update and every change to JF-1 now lives on this line, newest first."},
     {d:"2026-11-05",k:"Site",s:"wheel",t:"Smoother tilt, touch wheel favicon",b:"The tilt shot now glides with your scroll, with more frames on phones. The touch wheel is the new favicon and home screen icon."},
@@ -1331,13 +1331,14 @@ setTimeout(function(){layout();update();},600);
 
     /* the track follows the page 1:1 and glides over wheel steps; the playhead runs from the first node to the last.
        After the last entry the screen stays pinned for half a screen (hold), so the end is seen standing still. */
-    var items=[].slice.call(track.querySelectorAll(".log-item")), ys=[], pastY=0, span=1, travel=0, hold=0, pinned=false, curY=0, active=-1, lastT=0, running=false, inView=!("IntersectionObserver" in window);
+    var items=[].slice.call(track.querySelectorAll(".log-item")), ys=[], pastY=0, span=1, travel=0, hold=0, lead=0, pinned=false, curY=0, active=-1, lastT=0, running=false, inView=!("IntersectionObserver" in window);
     function topIn(n){var y=0;while(n&&n!==track){y+=n.offsetTop;n=n.offsetParent;}return y;}
     function scrolled(){return -log.getBoundingClientRect().top;}
     function target(s){return Math.max(0,Math.min(travel,s));}
     function apply(){
       track.style.transform=pinned?"translate3d(0,"+(-curY).toFixed(1)+"px,0)":"none";
-      var k=pinned?curY/travel:1, y=ys[0]+k*(ys[ys.length-1]-ys[0]), a=0;
+      /* the playhead reaches the last node a little before the track stops (lead), so the last switch happens in motion and the track comes to rest already finished */
+      var k=pinned?Math.min(1,curY/Math.max(1,travel-lead)):1, y=ys[0]+k*(ys[ys.length-1]-ys[0]), a=0;
       fill.style.transform="scaleY("+Math.max(0,Math.min(1,(y-pastY)/span)).toFixed(4)+")";
       for(var i=0;i<items.length;i++){var on=y>=ys[i]-2; if(on!==items[i]._a){items[i]._a=on;items[i].classList.toggle("on",on);} if(on)a=i;}
       if(!pinned)a=0;
@@ -1367,6 +1368,7 @@ setTimeout(function(){layout();update();},600);
       pinned=travel>0&&window.innerHeight>=460;
       log.classList.toggle("log-static",!pinned);
       hold=pinned?Math.round(pin.offsetHeight*0.5):0;
+      lead=pinned?Math.min(Math.round(travel*0.2),Math.round(view.clientHeight*0.18)):0;
       if(pinned)log.style.height=(pin.offsetHeight+travel+hold)+"px";
       var dot=window.innerWidth<860?23:31;
       ys=items.map(function(n){return topIn(n)+dot;});
