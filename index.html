@@ -96,6 +96,7 @@ h1{grid-column:2;margin:0;font-weight:400;font-size:clamp(46px,7.6vw,120px);line
 
 /* ---------- Cursor, wipes, reveals ---------- */
 html.pxc,html.pxc *{cursor:none!important}
+html.pxc input,html.pxc textarea,html.pxc select{cursor:text!important}
 .px-cursor{position:fixed;left:0;top:0;width:100vw;height:100vh;pointer-events:none;z-index:60;image-rendering:pixelated}
 .px-wipe.tall{height:clamp(180px,36vh,340px)}
 .px-wipe{position:absolute;left:0;top:0;width:100%;height:clamp(120px,20vh,200px);transform:translateY(-100%);display:block;pointer-events:none;z-index:6}
@@ -113,7 +114,8 @@ html.pxc,html.pxc *{cursor:none!important}
 .card:hover{background:var(--crew-hover)}
 .tile{background:var(--stage);aspect-ratio:1/1;display:grid;place-items:center;overflow:hidden}
 .tile canvas{width:58%;height:auto;aspect-ratio:1/1;image-rendering:pixelated;image-rendering:crisp-edges;display:block}
-.card:hover .tile canvas{animation:hop .45s steps(2) 2}
+.card:hover .tile canvas,.card.hop .tile canvas{animation:hop .45s steps(2) 2}
+@media (hover:none){.card{-webkit-tap-highlight-color:transparent}.card:active{background:var(--crew-hover)}}
 @keyframes hop{50%{transform:translateY(-12%)}}
 .card .no{font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;color:var(--orange)}
 .card h3{margin:0;font-size:24px;font-weight:500;letter-spacing:-.02em;line-height:1.05}
@@ -864,12 +866,17 @@ imgs[N-1].addEventListener("load",function(){update();});
 layout(); readScroll(); curP=tgtP; update();
 setTimeout(function(){layout();update();},600);
 
-/* ================= Pixel companion: a round mosaic dot with a pixel trail; turns into an arrow near headings ================= */
+/* ================= Pixel cursor: replaces the system pointer with a mosaic shape and a pixel trail; turns into an arrow near headings.
+   The shape's centre is the hotspot. Text fields keep the system text cursor. ================= */
 (function(){
   if(!window.matchMedia||!matchMedia("(hover: hover) and (pointer: fine)").matches)return;
   var c=document.createElement("canvas"); c.className="px-cursor"; c.setAttribute("aria-hidden","true"); document.body.appendChild(c);
   var g=c.getContext("2d"), CS=6, vw=0, vh=0, dp=1, cols=0, rows=0, trail=null, act=[], drew=false, lastDecide=0;
-  function parse(r){var out=[];r.forEach(function(row,y){for(var x=0;x<row.length;x++){var ch=row.charAt(x);if(ch!==".")out.push({x:x,y:y,e:ch==="E"});}});return {cells:out,w:r[0].length,h:r.length};}
+  function parse(r){
+    var out=[], on=function(x,y){return y>=0&&y<r.length&&x>=0&&x<r[y].length&&r[y].charAt(x)!==".";};
+    r.forEach(function(row,y){for(var x=0;x<row.length;x++){var ch=row.charAt(x);if(ch!==".")out.push({x:x,y:y,e:ch==="E",b:!(on(x-1,y)&&on(x+1,y)&&on(x,y-1)&&on(x,y+1))});}});
+    return {cells:out,w:r[0].length,h:r.length};
+  }
   var SHAPES={
     blob:parse(["..EEE..",".EFFFE.","EFFFFFE","EFFFFFE","EFFFFFE",".EFFFE.","..EEE.."]),
     dot:parse([".EEE.","EFFFE","EFFFE","EFFFE",".EEE."]),
@@ -913,25 +920,35 @@ setTimeout(function(){layout();update();},600);
     }else want=sectionShape();
     if(want!==mode){if(want==="arrow")ang=tgtAng;prevMode=mode;mode=want;morph=reduce?1:0;}
   }
-  window.addEventListener("pointermove",function(e){inside=true;mx=e.clientX;my=e.clientY;if(fx<0){fx=mx+14;fy=my+14;}moved=true;},{passive:true});
+  var root=document.documentElement, overText=false, hot=false, down=false, sc=1;
+  window.addEventListener("pointermove",function(e){
+    if(e.pointerType&&e.pointerType!=="mouse")return;
+    inside=true;mx=e.clientX;my=e.clientY;if(fx<0){fx=mx;fy=my;}moved=true;
+    root.classList.add("pxc");
+    var t=e.target; overText=!!(t&&t.closest&&t.closest("input,textarea,select,[contenteditable]"));
+    hot=!!(t&&t.closest&&t.closest("a,button,label,summary,[role='button']"));
+  },{passive:true});
+  window.addEventListener("pointerdown",function(){down=true;},{passive:true});
+  window.addEventListener("pointerup",function(){down=false;},{passive:true});
   window.addEventListener("scroll",function(){moved=true;lastScroll=performance.now();},{passive:true});
-  function out(){inside=false;fx=-1;}
+  function out(){inside=false;fx=-1;down=false;}
   document.addEventListener("mouseleave",out); window.addEventListener("blur",out);
   var FILL=[pal.orange,pal.soft,pal.deep,pal.orange,pal.soft,"#f3c27a"], EDGE=["#1b1b1a","#4b4b4a","#1b1b1a"];
   function colFor(e,k){return e?EDGE[Math.floor(k*EDGE.length)]:(k<0.1?"#4b4b4a":FILL[Math.floor(k*FILL.length)]);}
   /* draws a rigid sprite with sub-pixel position, rotation and a velocity stretch; returns cell centres for the trail */
   function paint(name,px,py,rot,t,mask,stamp){
     var S=SHAPES[name], hw=S.w*CS/2, hh=S.h*CS/2, sp=Math.hypot(vx,vy), va=Math.atan2(vy,vx);
-    var st=Math.min(0.45,sp/38), sx=1+st, sy=1-st*0.45;
-    g.setTransform(dp,0,0,dp,px*dp,py*dp);
+    var st=Math.min(0.3,sp/60), sx=1+st, sy=1-st*0.45;
+    g.setTransform(dp*sc,0,0,dp*sc,px*dp,py*dp);
     if(st>0.01){g.rotate(va);g.scale(sx,sy);g.rotate(-va);}
     if(rot)g.rotate(rot);
     var cs=Math.cos(rot||0), sn=Math.sin(rot||0);
     for(var i=0;i<S.cells.length;i++){
       var q=S.cells[i];
       if(mask&&!mask(q))continue;
+      if(hot&&!q.b)continue;                              /* over a link only an orange outline stays, so the text shows through */
       if(q.e&&h2(q.x*31+t,q.y*17)<0.14)continue;        /* boiling outline */
-      g.fillStyle=colFor(q.e,h2(q.x*5+t,q.y*3+(t>>1)));
+      g.fillStyle=hot?FILL[Math.floor(h2(q.x*5+t,q.y*3)*FILL.length)]:colFor(q.e,h2(q.x*5+t,q.y*3+(t>>1)));
       var lx=q.x*CS-hw, ly=q.y*CS-hh;
       g.fillRect(lx,ly,CS-1,CS-1);
       if(stamp&&!q.e){var wx=px+(lx+CS/2)*cs-(ly+CS/2)*sn, wy=py+(lx+CS/2)*sn+(ly+CS/2)*cs;
@@ -946,14 +963,11 @@ setTimeout(function(){layout();update();},600);
     g.setTransform(dp,0,0,dp,0,0); g.clearRect(0,0,vw,vh); drew=true;
     /* layout reads are throttled, and wait for scrolling to pause so they never interrupt it */
     if((moved||mode==="arrow")&&now-lastDecide>100&&now-lastScroll>140){moved=false;lastDecide=now;decide();}
-    /* gentle idle float so it never sits completely still */
-    var flx=reduce?0:Math.sin(now/620)*2.6, fly=reduce?0:Math.cos(now/740)*2.2;
-    var tx=mx+14+flx, ty=my+14+fly, ox=fx, oy=fy;
-    if(reduce){fx=tx;fy=ty;ang=tgtAng;}
-    else{
-      var a=1-Math.pow(1-0.24,dt/16.7); fx+=(tx-fx)*a; fy+=(ty-fy)*a;
-      var da=Math.atan2(Math.sin(tgtAng-ang),Math.cos(tgtAng-ang)); ang+=da*(1-Math.pow(1-0.14,dt/16.7));
-    }
+    /* it is the pointer: drawn exactly at the mouse, no lag. Links grow it a little, a press squeezes it. */
+    var ox=fx, oy=fy; fx=mx; fy=my;
+    if(reduce)ang=tgtAng;
+    else{var da=Math.atan2(Math.sin(tgtAng-ang),Math.cos(tgtAng-ang)); ang+=da*(1-Math.pow(1-0.14,dt/16.7));}
+    var ts=down?0.82:(hot?1.3:1); sc+=(ts-sc)*(reduce?1:1-Math.pow(1-0.35,dt/16.7));
     var k=dt/16.7; vx+=((fx-ox)/k-vx)*0.35; vy+=((fy-oy)/k-vy)*0.35;
     if(morph<1)morph=Math.min(1,morph+dt/240);
     var t=(now/90)|0;
@@ -971,7 +985,7 @@ setTimeout(function(){layout();update();},600);
       g.fillRect(x*CS,y*CS,CS-1,CS-1);
     }
     act.length=keep;
-    if(!inside)return;
+    if(!inside||overText)return;
     /* a few loose pixels orbit and spark around the shape */
     if(!reduce&&now-lastSat>110){lastSat=now;
       for(var n=0;n<2;n++){var aa=Math.random()*6.283, rr=(SHAPES[mode].w*0.5+1.5+Math.random()*2.5)*CS;
@@ -1090,6 +1104,29 @@ setTimeout(function(){layout();update();},600);
     var p=document.createElement("p"); p.textContent=m[3];
     card.appendChild(no); card.appendChild(h); card.appendChild(pt); card.appendChild(p); grid.appendChild(card);
   });
+  /* touch screens have no hover, so the crew hops on its own: each card once as it comes into view, on every tap,
+     and every couple of seconds one of the cards on screen */
+  if(coarse&&!reduce){
+    var cards=[].slice.call(grid.children);
+    function hop(cd){cd.classList.remove("hop");void cd.offsetWidth;cd.classList.add("hop");}
+    cards.forEach(function(cd,i){
+      cd._i=i;
+      cd.addEventListener("animationend",function(){cd.classList.remove("hop");});
+      cd.addEventListener("click",function(){hop(cd);});
+    });
+    if("IntersectionObserver" in window){
+      var cio=new IntersectionObserver(function(en){en.forEach(function(e){
+        var cd=e.target; cd._vis=e.isIntersecting;
+        if(e.isIntersecting&&!cd._seen){cd._seen=true;setTimeout(function(){hop(cd);},420+(cd._i%2)*160);}
+      });},{threshold:0.6});
+      cards.forEach(function(cd){cio.observe(cd);});
+      setInterval(function(){
+        if(document.hidden)return;
+        var v=cards.filter(function(cd){return cd._vis&&!cd.classList.contains("hop");});
+        if(v.length)hop(v[Math.floor(Math.random()*v.length)]);
+      },1700);
+    }
+  }
   /* reveal on scroll */
   var els=[].slice.call(document.querySelectorAll(".rv"));
   if("IntersectionObserver" in window){
@@ -1236,22 +1273,26 @@ setTimeout(function(){layout();update();},600);
     ["Printed prototype enclosure","wip"],["Jellyfin client","wip"],["First units","next"]
   ];
   var NEXT="Printed prototype, first boot";
-  /* Build log, newest first. Every change gets an entry here.
+  /* Build log, newest first. It tells the product's story: hardware, software, sourcing, costs and prototypes.
+     Website work only gets an entry for a notable step, bundled, never one per tweak.
      d: date, k: Hardware | Software | Site, s: crew sprite, t: title, b: text, r: optional detail rows.
      The status panel takes its date and latest hardware line from this list. */
   var TIMELINE=[
-    {d:"2026-11-05",k:"Site",s:"sim",t:"Build log holds to the end",b:"The timeline stays pinned until its last entry has settled, then rests for a moment before the page moves on. The last entry lights up while the line is still moving, and the highlight fades from row to row. Fast scrolling included."},
+    {d:"2026-11-07",k:"Hardware",s:"plate",t:"First prototype board started",b:"The first run of the custom JF-1 board is under way at LCSC. It brings the ESP32-S3, audio, charging and haptics together on one PCB for the printed prototype."},
+    {d:"2026-11-07",k:"Site",s:"wheel",t:"Pixel cursor and a livelier crew",b:"On desktop the pixel dot, heart and arrow are the cursor. On phones the crew hops on its own and whenever you tap a card."},
+    {d:"2026-11-06",k:"Hardware",s:"pi",t:"Decision: one custom PCB",b:"Instead of wiring the DAC, amp, charger, haptics and Bluetooth together as separate breakout boards, JF-1 gets one custom PCB made through LCSC. That means fewer cables inside the body, less space taken up, a lower cost per unit and the same board every time."},
     {d:"2026-11-05",k:"Hardware",s:"body",t:"CAD v2.2 and parts list",b:"The CAD model stands at v2.2. The parts list is written and the parts are ordered.",r:[["Industrial design","Done"],["CAD model","v2.2"],["Parts","Ordered"]]},
-    {d:"2026-11-05",k:"Site",s:"display",t:"Build log opens",b:"Every update and every change to JF-1 now lives on this line, newest first."},
-    {d:"2026-11-05",k:"Site",s:"wheel",t:"Smoother tilt, touch wheel favicon",b:"The tilt shot now glides with your scroll, with more frames on phones. The touch wheel is the new favicon and home screen icon."},
-    {d:"2026-11-05",k:"Site",s:"plate",t:"Full parts render",b:"The studio section now shows every part laid out on one sheet, with a stacked version for phones."},
-    {d:"2026-11-05",k:"Site",s:"dial",t:"New pixel icons",b:"The wheel with its printed symbols, three keys for shuffle, repeat and favourite, and a sharper ESP32, speaker and microSD."},
-    {d:"2026-11-05",k:"Site",s:"jack",t:"Crew grows to twelve",b:"New cards for the 3.5 mm jack and the aluminium body, plus a short fact on every card."},
-    {d:"2026-11-05",k:"Site",s:"pi",t:"Page follows the current hardware",b:"ESP32-S3 at the core, your library offline on microSD, tempered glass on the front. Specs, crew and status all follow the new build."},
-    {d:"2026-11-03",k:"Site",s:"keys",t:"Parts numbered by position",b:"Numbers run down the left, across the top, then down the right, the same in the diagram and the crew list."},
-    {d:"2026-11-03",k:"Site",s:"glass",t:"Tuned for phones",b:"A better mobile layout, smoother scrolling and browser bars that take the colour of each section."},
-    {d:"2026-11-03",k:"Site",s:"battery",t:"The player opens as you scroll",b:"The exploded view and the tilt shot run as image sequences tied to your scroll."},
-    {d:"2026-11-03",k:"Site",s:"usb",t:"JF-1 goes online",b:"First version of this page, live at jf-1.duneify.com."}
+    {d:"2026-11-05",k:"Site",s:"display",t:"Build log opens",b:"Every step of JF-1 on one line, newest first, pinned while you scroll through it."},
+    {d:"2026-11-05",k:"Site",s:"dial",t:"Page follows the new build",b:"ESP32-S3, microSD and tempered glass across specs and crew. Twelve crew cards with new pixel icons, and the full parts render in the studio section."},
+    {d:"2026-11-05",k:"Site",s:"glass",t:"Smoother tilt, touch wheel favicon",b:"The tilt shot glides with your scroll, and the touch wheel is the new favicon and home screen icon."},
+    {d:"2026-11-04",k:"Hardware",s:"battery",t:"Costs brought down",b:"The biggest saving sits in the modules: each breakout board costs more than the bare chip it carries. Putting those chips straight onto one board is the lever, which led to the custom PCB."},
+    {d:"2026-11-03",k:"Hardware",s:"usb",t:"Costs worked out",b:"Every part on the list priced, from the ESP32-S3 module down to the M2 screws, to see what one JF-1 costs to build."},
+    {d:"2026-11-03",k:"Site",s:"keys",t:"Tuned for phones",b:"A mobile layout, smoother scrolling and browser bars that take the colour of each section."},
+    {d:"2026-11-03",k:"Site",s:"speaker",t:"The player opens as you scroll",b:"The exploded view and the tilt shot run as image sequences tied to your scroll."},
+    {d:"2026-11-03",k:"Site",s:"usb",t:"JF-1 goes online",b:"First version of this page, live at jf-1.duneify.com."},
+    {d:"2026-11-02",k:"Hardware",s:"sim",t:"Parts picked",b:"The parts for the ESP32-S3 build are chosen: a dedicated DAC for the headphone jack, a separate amp for the speaker, haptics for the wheel and a 2000 mAh cell.",r:[["Core","ESP32-S3 N16R8"],["Display","ST7789, 2.0 inch"],["Headphone DAC","PCM5102A"],["Speaker amp","MAX98357"],["Bluetooth","KCX BT"],["Haptics","DRV2605L"],["Charger","TP4056"],["Battery","605050, 2000 mAh"]]},
+    {d:"2026-11-01",k:"Hardware",s:"pi",t:"Decision: ESP32-S3 instead of Raspberry Pi",b:"The Raspberry Pi runs a full Linux system, and that costs power, heat and time. On the 2000 mAh cell it would have lasted around 4 hours of playback, the ESP32-S3 manages around 15 (both estimated). The Pi turns about 2 watts into heat: sealed in an aluminium body in a pocket, the case would get uncomfortably warm and the chip would slow down. The ESP32-S3 needs about half a watt and stays cool. Linux takes around 20 seconds to boot, the ESP32-S3 is ready in under a second. And the module measures 18 x 25.5 mm and costs around 5 dollars, the Pi with an LTE modem well over 30. Your library now lives on microSD and plays offline, synced over Wi-Fi.",r:[["Battery life","about 4 h to about 15 h"],["Power and heat","about 2 W to 0.5 W"],["Start-up","20 s to under 1 s"],["Core price","over 30 to about 5 USD"],["Core size","18 x 25.5 mm module"]]},
+    {d:"2026-10-31",k:"Hardware",s:"jack",t:"First plan: a Raspberry Pi as the core",b:"JF-1 started out with a Raspberry Pi at its core, a full Linux computer, and a SIM card to stream your Jellyfin library over mobile data."}
   ];
   var latest=TIMELINE[0].d.split("-"), hw=TIMELINE.filter(function(e){return e.k==="Hardware";})[0], hwD=hw.d.split("-");
   var LOG=[[hwD[2]+"."+hwD[1]+".",hw.t],["Next",NEXT]];
