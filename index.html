@@ -938,7 +938,7 @@ setTimeout(function(){layout();update();},600);
   /* draws a rigid sprite with sub-pixel position, rotation and a velocity stretch; returns cell centres for the trail */
   function paint(name,px,py,rot,t,mask,stamp){
     var S=SHAPES[name], hw=S.w*CS/2, hh=S.h*CS/2, sp=Math.hypot(vx,vy), va=Math.atan2(vy,vx);
-    var st=Math.min(0.3,sp/60), sx=1+st, sy=1-st*0.45;
+    var st=Math.min(0.45,sp/38), sx=1+st, sy=1-st*0.45;
     g.setTransform(dp*sc,0,0,dp*sc,px*dp,py*dp);
     if(st>0.01){g.rotate(va);g.scale(sx,sy);g.rotate(-va);}
     if(rot)g.rotate(rot);
@@ -962,14 +962,25 @@ setTimeout(function(){layout();update();},600);
     if(fx<0&&!inside){if(drew){g.setTransform(dp,0,0,dp,0,0);g.clearRect(0,0,vw,vh);drew=false;}return;}
     g.setTransform(dp,0,0,dp,0,0); g.clearRect(0,0,vw,vh); drew=true;
     /* layout reads are throttled, and wait for scrolling to pause so they never interrupt it */
-    if((moved||mode==="arrow")&&now-lastDecide>100&&now-lastScroll>140){moved=false;lastDecide=now;decide();}
-    /* it is the pointer: drawn exactly at the mouse, no lag. Links grow it a little, a press squeezes it. */
-    var ox=fx, oy=fy; fx=mx; fy=my;
-    if(reduce)ang=tgtAng;
-    else{var da=Math.atan2(Math.sin(tgtAng-ang),Math.cos(tgtAng-ang)); ang+=da*(1-Math.pow(1-0.14,dt/16.7));}
-    var ts=down?0.82:(hot?1.3:1); sc+=(ts-sc)*(reduce?1:1-Math.pow(1-0.35,dt/16.7));
+    /* the full check (headings) waits for scrolling to pause; while scrolling, only the section under the shape is read,
+       which is cheap, so the shape changes as soon as a new section arrives instead of after the scroll */
+    if(now-lastDecide>100){
+      if(now-lastScroll>140){if(moved||mode==="arrow"){moved=false;lastDecide=now;decide();}}
+      else if(mode!=="arrow"){lastDecide=now;var want=sectionShape();if(want!==mode){prevMode=mode;mode=want;morph=reduce?1:0;}}
+    }
+    /* the shape trails the hidden pointer with a soft lag and a gentle idle float, as before; links grow it a little, a press squeezes it */
+    var flx=reduce?0:Math.sin(now/620)*2.6, fly=reduce?0:Math.cos(now/740)*2.2;
+    var tx=mx+flx, ty=my+fly, ox=fx, oy=fy;
+    if(reduce){fx=tx;fy=ty;ang=tgtAng;}
+    else{
+      var a=1-Math.pow(1-0.24,dt/16.7); fx+=(tx-fx)*a; fy+=(ty-fy)*a;
+      var da=Math.atan2(Math.sin(tgtAng-ang),Math.cos(tgtAng-ang)); ang+=da*(1-Math.pow(1-0.14,dt/16.7));
+    }
+    /* a shape change dips the size briefly, so the swap reads as one soft pop instead of a hard cut */
+    var ts=(down?0.82:(hot?1.3:1))*(morph<1&&!reduce?1-0.22*Math.sin(Math.PI*morph):1);
+    sc+=(ts-sc)*(reduce?1:1-Math.pow(1-0.35,dt/16.7));
     var k=dt/16.7; vx+=((fx-ox)/k-vx)*0.35; vy+=((fy-oy)/k-vy)*0.35;
-    if(morph<1)morph=Math.min(1,morph+dt/240);
+    if(morph<1)morph=Math.min(1,morph+dt/320);
     var t=(now/90)|0;
     /* mosaic trail on the page grid: lingers behind the moving shape */
     var dec=Math.pow(0.9,k);
