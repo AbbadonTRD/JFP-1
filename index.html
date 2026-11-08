@@ -1149,8 +1149,8 @@ setTimeout(function(){layout();update();},600);
 /* ================= Studio: photo as a curved dot-matrix screen that flattens while pinned ================= */
 (function(){
   var sec=document.getElementById("studio"); if(!sec)return;
-  /* All parts laid out; phones get the stacked version, the wide one would only show its middle. */
-  var PHOTO_SRC=window.innerWidth<860?"parts-render-tall.webp":"parts-render.webp";
+  /* The stacked parts render, on every screen: it is taller than the screen, so the scroll pans it from top to bottom. */
+  var PHOTO_SRC="parts-render-tall.webp";
   var cv=document.getElementById("crt"), copy=document.getElementById("studioCopy"), outro=document.getElementById("outro");
   var img=new Image(), ready=false, W=0, H=0, dp=1;
   var gl=null; try{gl=cv.getContext("webgl",{antialias:false,premultipliedAlpha:false});}catch(e){gl=null;}
@@ -1173,7 +1173,7 @@ setTimeout(function(){layout();update();},600);
       " if(se>1.0||uReady<0.5){gl_FragColor=vec4(bg,1.0);return;}",
       " float ra=uHalf.x/uHalf.y, ia=uImg.x/uImg.y; vec2 uv;",
       " if(ra>ia){float fh=ia/ra; uv=vec2(w.x*0.5+0.5,0.5+w.y*0.5*fh+(uPan-0.5)*(1.0-fh));}",
-      " else{float fw=ra/ia; uv=vec2(0.5+w.x*0.5*fw,w.y*0.5+0.5);}",
+      " else{float fw=ra/ia; uv=vec2(0.5+w.x*0.5*fw+(uPan-0.5)*(1.0-fw),w.y*0.5+0.5);}",
       " vec3 col=texture2D(uTex,clamp(uv,0.0,1.0)).rgb*uDark;",
       " col*=1.0-(0.3+0.25*uCurve)*dot(w*0.85,w*0.85);",
       " if(mod(cid.y,2.0)<1.0)col*=1.0-0.16*uCurve;",
@@ -1223,7 +1223,9 @@ setTimeout(function(){layout();update();},600);
       ctx2.fillStyle="#0b0b0a"; ctx2.fillRect(0,0,cv.width,cv.height);
       if(ready){var cell=Math.max(2,Math.round(4*dp)), sw=Math.ceil(hx*2/cell), shh=Math.ceil(hy*2/cell);
         ctx2.imageSmoothingEnabled=false; ctx2.globalAlpha=0.62;
-        ctx2.drawImage(img,cv.width/2-hx,cv.height/2-hy,hx*2,hy*2); ctx2.globalAlpha=1;}
+        var iw=img.naturalWidth, ih=img.naturalHeight, ra=hx/hy, sx0=0, sy0=0, sw0=iw, sh0=ih;
+        if(ra>iw/ih){sh0=iw/ra;sy0=(ih-sh0)*p;}else{sw0=ih*ra;sx0=(iw-sw0)*p;}
+        ctx2.drawImage(img,sx0,sy0,sw0,sh0,cv.width/2-hx,cv.height/2-hy,hx*2,hy*2); ctx2.globalAlpha=1;}
     }
     /* copy rides up faster than the scroll, fades in and out */
     var y=lerp(vh*0.72,-vh*0.25,Math.min(1,p/0.85));
