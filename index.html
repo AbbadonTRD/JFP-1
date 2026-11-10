@@ -6,7 +6,7 @@
 <meta name="description" content="JF-1 is a pocket music player for your Jellyfin library. Your music offline on microSD, synced over Wi-Fi, a touch wheel on the front.">
 <meta property="og:title" content="JF-1 Player">
 <meta property="og:description" content="A pocket player for your Jellyfin library.">
-<meta property="og:image" content="https://jf-1.duneify.com/hero-zoom.webp">
+<meta property="og:image" content="https://jf-1.duneify.com/hero-zoom.webp?v=2">
 <meta name="theme-color" content="#cbcbca">
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -145,7 +145,7 @@ html.pxc input,html.pxc textarea,html.pxc select{cursor:text!important}
 .listen p b{color:#ecebe6;font-weight:500}
 .zoom{position:relative;height:320vh;background:var(--paper)}
 .zoom-pin{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;background:var(--studio-bg)}
-.zoom-rig{position:absolute;left:0;top:0;height:min(76svh,720px);aspect-ratio:1788/3860;transform-origin:0 0}
+.zoom-rig{position:absolute;left:0;top:0;height:min(76svh,720px);aspect-ratio:488/1003;transform-origin:0 0}
 .zoom-dev{display:block;width:100%;height:100%}
 .zoom-scr{position:absolute;left:16.22%;top:14.84%;width:51.85%;height:30.08%;image-rendering:pixelated;image-rendering:crisp-edges}
 .zoom-veil{position:absolute;inset:0;pointer-events:none;z-index:1;
@@ -482,8 +482,7 @@ html.pxc input,html.pxc textarea,html.pxc select{cursor:text!important}
 <section class="zoom" id="zoom" aria-label="JF-1 up close">
   <div class="zoom-pin" id="zoomPin">
     <div class="zoom-rig" id="zoomRig">
-      <img class="zoom-dev" src="hero-zoom.webp" alt="The JF-1 player seen from the front">
-      <img class="zoom-scr" src="screen-pixels.png" alt="">
+      <img class="zoom-dev" src="hero-zoom.webp?v=2" alt="The JF-1 player seen from the front">
     </div>
     <div class="zoom-veil" id="zoomVeil" aria-hidden="true"></div>
     <p class="zoom-cap mono" id="zoomCap">JF-1 · Your library, one album at a time</p>
@@ -705,7 +704,7 @@ Array.prototype.forEach.call(document.querySelectorAll(".controls .grp"),functio
 });
 if("IntersectionObserver" in window){new IntersectionObserver(function(en){visible=en[0].isIntersecting;}).observe(wrap);}
 heroImg.onload=function(){heroReady=true;buildUnder();};
-heroImg.src="hero-player.webp";
+heroImg.src="hero-player.webp?v=2";
 sizeMosaic(); requestAnimationFrame(loop);
 
 /* ================= Decoded frames: decode() ahead of the playhead, so drawImage never decodes a webp mid-scroll.
@@ -1250,7 +1249,7 @@ setTimeout(function(){layout();update();},600);
   var sec=document.getElementById("zoom"); if(!sec)return;
   var pin=document.getElementById("zoomPin"), rig=document.getElementById("zoomRig"), cap=document.getElementById("zoomCap"), veil=document.getElementById("zoomVeil");
   /* display area inside the device image, as fractions of the image */
-  var SX=0.1622, SY=0.1484, SW=0.5185, SH=0.3008;
+  var SX=0.092, SY=0.110, SW=0.670, SH=0.294;
   function sm(x){x=Math.max(0,Math.min(1,x));return x*x*(3-2*x);}
   function lerp(a,b,t){return a+(b-a)*t;}
   var lastP=-1;
