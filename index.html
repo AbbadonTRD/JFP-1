@@ -730,7 +730,7 @@ sizeMosaic(); requestAnimationFrame(loop);
 /* ================= Decoded frames: decode() ahead of the playhead, so drawImage never decodes a webp mid-scroll.
    The browser owns the decoded memory: closing ImageBitmaps while scrubbing crashed the renderer. ================= */
 function decodedWindow(imgs,R,onReady){
-  var N=imgs.length, ready=new Array(N), busy=new Array(N), at=-1, dir=1, can=!!(window.Image&&Image.prototype.decode), running=0, MAX=coarse?2:4;
+  var N=imgs.length, ready=new Array(N), busy=new Array(N), at=-1, dir=1, can=!!(window.Image&&Image.prototype.decode), running=0, MAX=coarse?3:4;
   function start(i){
     var im=imgs[i]; if(running>=MAX||i<0||i>=N||ready[i]||busy[i]||!im||!im.complete||!im.naturalWidth)return;
     busy[i]=true; running++;
@@ -768,7 +768,9 @@ function edgeSprite(w,h,color,hs,vs){
 /* ================= Scroll sequence ================= */
 var syncBars=function(){}, spriteCanvas=function(){return document.createElement("canvas");};
 var N=120, imgs=new Array(N), seq=document.getElementById("seq"), sx=seq.getContext("2d",{alpha:false}), STAGE=css("--stage"), seqEdges=null;
-function src(i){return "frames/f_"+String(i+1).padStart(3,"0")+".webp?v=4";}
+/* phones get their own 960 px set, drawn 1:1: no resampling on every frame, so no shimmer, and a faster decode */
+var SMALL=coarse||document.getElementById("frame").clientWidth*Math.min(2,window.devicePixelRatio||1)<=1000, FPX=SMALL?960:1280;
+function src(i){return "frames/"+(SMALL?"m/":"")+"f_"+String(i+1).padStart(3,"0")+".webp?v=5";}
 function load(i){var im=new Image();im.decoding="async";im.src=src(i);imgs[i]=im;}
 load(0);load(N-1);for(var i=1;i<N-1;i++)load(i);
 function getImg(i){for(var k=Math.max(0,Math.min(N-1,i));k>=0;k--){var im=imgs[k];if(im&&im.complete&&im.naturalWidth)return im;}return null;}
@@ -815,9 +817,9 @@ LABELS.forEach(function(L,i){
 var S=0, mobile=false;
 function layout(){
   S=frameEl.clientWidth; mobile=window.innerWidth<860; lastKey=-2;
-  var dpr2=maxDp(), px=Math.min(1280,Math.round(S*dpr2));
+  var px=SMALL?FPX:Math.min(FPX,Math.round(S*maxDp()));
   if(px&&seq.width!==px){
-    seq.width=px;seq.height=px;sx.fillStyle=STAGE;sx.fillRect(0,0,px,px);
+    seq.width=px;seq.height=px;sx.imageSmoothingEnabled=true;sx.imageSmoothingQuality="high";sx.fillStyle=STAGE;sx.fillRect(0,0,px,px);
     seqEdges=edgeSprite(px,px,STAGE,[[0,0],[0.08,1],[0.92,1],[1,0]],[[0,0],[0.08,1],[0.92,1],[1,0]]);
   }
   var margin=(window.innerWidth-S)/2, maxW=Math.max(120,Math.min(230,margin-30));
@@ -834,8 +836,9 @@ function layout(){
   });
   draw(curF,true);
 }
-var curP=0, tgtP=0, curF=0, lastKey=-1, lastOpen=-1, lastShown=-1, seqOn=true, drawnA=null, drawnB=null, drawnF=-1;
-var dec=decodedWindow(imgs,coarse?5:10,function(i){var a=Math.floor(curF);if(i===a||i===a+1)draw(curF,true);});
+var curP=0, tgtP=0, curF=0, lastKey=-1, lastOpen=-1, lastShown=-1, seqOn=true, drawnA=null, drawnB=null, drawnF=-1, drawnI=-1;
+/* a frame that finished decoding replaces the stand-in on screen when it is closer to the wanted one */
+var dec=decodedWindow(imgs,coarse?8:10,function(i){var a=Math.round(curF);if(drawnI<0||Math.abs(i-a)<Math.abs(drawnI-a))draw(curF,true);});
 imgs.forEach(function(im){im.addEventListener("load",function(){if(seqOn)dec.touch(curF,true);});});
 function draw(f,force){
   var a=Math.round(f), b=a, fr=0;
@@ -844,7 +847,7 @@ function draw(f,force){
   var ia=dec.near(a)||((dec.can()&&drawnA)?null:getImg(a)), ib=b!==a?dec.get(b):null;
   if(!ia)return;
   if(!force&&ia===drawnA&&ib===drawnB&&Math.abs(f-drawnF)<0.01)return;
-  drawnA=ia; drawnB=ib; drawnF=f;
+  drawnA=ia; drawnB=ib; drawnF=f; drawnI=imgs.indexOf(ia);
   sx.globalAlpha=1; sx.fillStyle=STAGE; sx.fillRect(0,0,seq.width,seq.height);
   sx.drawImage(ia,0,0,seq.width,seq.height);
   if(ib&&ib!==ia&&fr>0.02){sx.globalAlpha=fr;sx.drawImage(ib,0,0,seq.width,seq.height);sx.globalAlpha=1;}
