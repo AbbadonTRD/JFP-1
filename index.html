@@ -263,6 +263,10 @@ html.pxc input,html.pxc textarea,html.pxc select{cursor:text!important}
 .log-rows .prow{font-size:11px}
 .log-meta{display:flex;align-items:flex-start;gap:14px;padding-inline:14px var(--gutter-r);min-width:0}
 .log-meta .tile{flex:none;width:clamp(56px,5.4vw,84px)}
+.log-meta{flex-wrap:wrap}
+.log-fig{flex:1 0 100%;margin:4px 0 0;min-width:0}
+.log-fig img{display:block;width:100%;height:auto;border:1px solid var(--crew-line)}
+.log-fig figcaption{display:flex;justify-content:space-between;gap:8px;margin-top:6px;font-size:10.5px;color:var(--muted)}
 .log-tag{display:flex;flex-direction:column;gap:4px;color:var(--muted)}
 .log-k.hw{color:#b8431a}
 .log-st{display:block;padding-inline:14px var(--gutter-r);padding-top:6px;align-self:start}
@@ -291,7 +295,7 @@ html.pxc input,html.pxc textarea,html.pxc select{cursor:text!important}
   .log-day{grid-template-columns:minmax(0,1fr)}
   .log-day.is-next::before{left:calc(100% / 12 - 1px)}
   .log-items{grid-column:auto}
-  .log-item{grid-template-columns:minmax(0,1fr) 52px;column-gap:12px;grid-template-areas:"tag tile" "t tile" "b b" "r r";padding:16px var(--gutter-r) 22px calc(100% / 12 + 14px)}
+  .log-item{grid-template-columns:minmax(0,1fr) 52px;column-gap:12px;grid-template-areas:"tag tile" "t tile" "b b" "r r" "f f";padding:16px var(--gutter-r) 22px calc(100% / 12 + 14px)}
   .log-item::before{left:calc(100% / 12 - 5px);top:19px}
   .log-item.is-active::before{left:calc(100% / 12 - 7px);top:17px}
   .log-main,.log-meta{display:contents}
@@ -300,6 +304,7 @@ html.pxc input,html.pxc textarea,html.pxc select{cursor:text!important}
   .log-t{grid-area:t}
   .log-b{grid-area:b}
   .log-rows{grid-area:r}
+  .log-fig{grid-area:f;margin-top:14px}
   .log-state{grid-template-columns:minmax(0,1fr);grid-template-areas:"st" "t"}
   .log-state .log-t{padding-inline:0}
   .log-st{grid-area:st;padding:0 0 6px}
@@ -412,7 +417,7 @@ html.pxc input,html.pxc textarea,html.pxc select{cursor:text!important}
 <main>
 <section class="stage-wrap" id="inside" aria-label="Inside the JF-1">
   <div class="stage">
-    <div class="stage-top mono"><span>JF-1 / Inside</span><span class="count" aria-live="polite"><span id="cnt">00</span><small>/10</small></span></div>
+    <div class="stage-top mono"><span>JF-1 / Inside</span><span class="count" aria-live="polite"><span id="cnt">00</span><small>/21</small></span></div>
     <div class="frame" id="frame">
       <canvas id="seq" role="img" aria-label="Exploded view of the JF-1 player, opening as you scroll"></canvas>
       <svg id="lines" aria-hidden="true"></svg>
@@ -748,25 +753,36 @@ function edgeSprite(w,h,color,hs,vs){
 /* ================= Scroll sequence ================= */
 var syncBars=function(){}, spriteCanvas=function(){return document.createElement("canvas");};
 var N=120, imgs=new Array(N), seq=document.getElementById("seq"), sx=seq.getContext("2d",{alpha:false}), STAGE=css("--stage"), seqEdges=null;
-function src(i){return "frames/f_"+String(i+1).padStart(3,"0")+".webp";}
+function src(i){return "frames/f_"+String(i+1).padStart(3,"0")+".webp?v=4";}
 function load(i){var im=new Image();im.decoding="async";im.src=src(i);imgs[i]=im;}
 load(0);load(N-1);for(var i=1;i<N-1;i++)load(i);
 function getImg(i){for(var k=Math.max(0,Math.min(N-1,i));k>=0;k--){var im=imgs[k];if(im&&im.complete&&im.naturalWidth)return im;}return null;}
-/* progress -> frame. Slow start, quick through the messy hand-over, slow settle. */
-var KEYS=[[0,0],[0.06,0],[0.16,24],[0.24,60],[0.58,N-1],[1,N-1]];
+/* progress -> frame. Short hold on the closed player, the screws and front plate come off, then the parts spread and settle. */
+var KEYS=[[0,0],[0.06,0],[0.22,30],[0.46,96],[0.58,N-1],[1,N-1]];
 function frameAt(p){for(var i=1;i<KEYS.length;i++){if(p<=KEYS[i][0]){var a=KEYS[i-1],b=KEYS[i];var t=(p-a[0])/(b[0]-a[0]||1);return a[1]+(b[1]-a[1])*t;}}return N-1;}
 
 var LABELS=[
- {t:"Display",s:"2.0 inch colour, cover art and progress",ax:.335,ay:.40,side:"L",ly:.27},
- {t:"Tempered glass",s:"Scratch-resistant front with a black border",ax:.155,ay:.47,side:"L",ly:.47},
- {t:"Touch wheel",s:"Scroll, skip, set the volume",ax:.335,ay:.59,side:"L",ly:.62},
- {t:"Key mat",s:"Shuffle, repeat, favourite",ax:.33,ay:.69,side:"L",ly:.78},
- {t:"microSD",s:"Your library, offline",ax:.535,ay:.285,side:"TL",ly:.03},
- {t:"Speaker",s:"No headphones needed",ax:.668,ay:.262,side:"TR",ly:.03},
- {t:"Back plate",s:"Aluminium with a speaker grille",ax:.86,ay:.33,side:"R",ly:.30},
- {t:"USB-C",s:"Charging and updates",ax:.76,ay:.545,side:"R",ly:.52},
- {t:"Battery",s:"2000 mAh lithium cell",ax:.665,ay:.55,side:"R",ly:.72},
- {t:"ESP32-S3",s:"Runs the Jellyfin client",ax:.54,ay:.665,side:"R",ly:.79}
+ {t:"Display",s:"2.0 inch colour, cover art and progress",ax:0.421,ay:0.269,side:"L",ly:0.14},
+ {t:"Screws",s:"Six screws, opens for repairs",ax:0.102,ay:0.32,side:"L",ly:0.27},
+ {t:"Tempered glass",s:"Scratch-resistant front, black border",ax:0.166,ay:0.405,side:"L",ly:0.39},
+ {t:"Touch wheel",s:"Scroll, skip, set the volume",ax:0.369,ay:0.496,side:"L",ly:0.5},
+ {t:"Wheel sensor",s:"Reads every turn of the wheel",ax:0.497,ay:0.488,side:"L",ly:0.61},
+ {t:"Button board",s:"Three switches under the keys",ax:0.484,ay:0.667,side:"L",ly:0.72},
+ {t:"Key mat",s:"Shuffle, repeat, favourite",ax:0.4,ay:0.707,side:"L",ly:0.84},
+ {t:"Speaker",s:"No headphones needed",ax:0.735,ay:0.214,side:"R",ly:0.05},
+ {t:"Battery",s:"2000 mAh lithium cell",ax:0.731,ay:0.325,side:"R",ly:0.12},
+ {t:"Back plate",s:"Aluminium with a speaker grille",ax:0.846,ay:0.321,side:"R",ly:0.19},
+ {t:"ESP32-S3",s:"Runs the Jellyfin client",ax:0.643,ay:0.452,side:"R",ly:0.26},
+ {t:"Headphone DAC",s:"PCM5102A, clean wired sound",ax:0.798,ay:0.479,side:"R",ly:0.33},
+ {t:"Speaker amp",s:"MAX98357, drives the speaker",ax:0.769,ay:0.518,side:"R",ly:0.4},
+ {t:"USB-C",s:"Charging and updates",ax:0.533,ay:0.554,side:"R",ly:0.47},
+ {t:"Headphone jack",s:"3.5 mm, plug in and play",ax:0.84,ay:0.545,side:"R",ly:0.54},
+ {t:"Bluetooth",s:"KCX BT, wireless headphones",ax:0.727,ay:0.557,side:"R",ly:0.61},
+ {t:"Vibration motor",s:"Felt clicks on the wheel",ax:0.798,ay:0.587,side:"R",ly:0.68},
+ {t:"Haptics driver",s:"DRV2605L, drives the motors",ax:0.772,ay:0.619,side:"R",ly:0.75},
+ {t:"Charger",s:"TP4056, charges the cell",ax:0.676,ay:0.598,side:"R",ly:0.82},
+ {t:"Haptic disc",s:"Soft taps for the keys",ax:0.721,ay:0.652,side:"R",ly:0.89},
+ {t:"microSD",s:"Your library, offline",ax:0.646,ay:0.673,side:"R",ly:0.96}
 ];
 var frameEl=document.getElementById("frame"), linesEl=document.getElementById("lines"), labelsEl=document.getElementById("labels");
 var NS="http://www.w3.org/2000/svg", els=[];
@@ -784,7 +800,7 @@ LABELS.forEach(function(L,i){
 var S=0, mobile=false;
 function layout(){
   S=frameEl.clientWidth; mobile=window.innerWidth<860; lastKey=-2;
-  var dpr2=maxDp(), px=Math.min(1080,Math.round(S*dpr2));
+  var dpr2=maxDp(), px=Math.min(1280,Math.round(S*dpr2));
   if(px&&seq.width!==px){
     seq.width=px;seq.height=px;sx.fillStyle=STAGE;sx.fillRect(0,0,px,px);
     seqEdges=edgeSprite(px,px,STAGE,[[0,0],[0.08,1],[0.92,1],[1,0]],[[0,0],[0.08,1],[0.92,1],[1,0]]);
@@ -807,7 +823,7 @@ var curP=0, tgtP=0, curF=0, lastKey=-1, lastOpen=-1, lastShown=-1, seqOn=true, d
 var dec=decodedWindow(imgs,coarse?5:10,function(i){var a=Math.floor(curF);if(i===a||i===a+1)draw(curF,true);});
 imgs.forEach(function(im){im.addEventListener("load",function(){if(seqOn)dec.touch(curF,true);});});
 function draw(f,force){
-  var a=Math.floor(f), b=Math.min(N-1,a+1), fr=f-a;
+  var a=Math.round(f), b=a, fr=0;
   if(seqOn)dec.touch(f);
   /* while the wanted frame is still decoding, keep what is on screen instead of decoding on the main thread */
   var ia=dec.near(a)||((dec.can()&&drawnA)?null:getImg(a)), ib=b!==a?dec.get(b):null;
@@ -821,7 +837,8 @@ function draw(f,force){
 }
 var wrapEl=document.getElementById("inside"), openEl=document.getElementById("open"), cnt=document.getElementById("cnt");
 var ci=document.getElementById("ci"), ct=document.getElementById("ct"), cs=document.getElementById("cs");
-var START=0.60, STEP=0.034, FADE=0.03;
+var START=0.60, STEP=0.35/LABELS.length, FADE=0.03;
+document.querySelector("#inside .count small").textContent="/"+LABELS.length;
 if("IntersectionObserver" in window)new IntersectionObserver(function(e){seqOn=e[0].isIntersecting;if(!seqOn)dec.release();},{rootMargin:"100% 0px"}).observe(wrapEl);
 function readScroll(){
   var r=wrapEl.getBoundingClientRect(), total=wrapEl.offsetHeight-window.innerHeight;
@@ -845,7 +862,7 @@ function update(){
     for(var i=els.length-1;i>=0;i--){if(p>=START+i*STEP){active=i;break;}}
     if(active!==lastKey){lastKey=active;
       els.forEach(function(o,i){o.path.style.strokeDashoffset="1";o.ring.style.opacity=(i===active)?"1":"0";o.dot.style.opacity=(i===active)?"1":"0";});
-      if(active>=0){ci.textContent=String(active+1).padStart(2,"0")+" / 10";ct.textContent=LABELS[active].t;cs.textContent=LABELS[active].s;}
+      if(active>=0){ci.textContent=String(active+1).padStart(2,"0")+" / "+LABELS.length;ct.textContent=LABELS[active].t;cs.textContent=LABELS[active].s;}
       else{ci.textContent="";ct.textContent="";cs.textContent="";}}
   }
   if(shown!==lastShown){lastShown=shown;cnt.textContent=String(shown).padStart(2,"0");}
@@ -1290,6 +1307,7 @@ setTimeout(function(){layout();update();},600);
      d: date, k: Hardware | Software | Site, s: crew sprite, t: title, b: text, r: optional detail rows.
      The status panel takes its date and latest hardware line from this list. */
   var TIMELINE=[
+    {d:"2026-11-11",k:"Site",s:"pi",t:"Exploded view shows the ESP32-S3 build",b:"The exploded view at the top of the page still opened the first system: a Raspberry Pi with a SIM card. It now opens the current build as a new animation, with the ESP32-S3, the audio and haptics boards, microSD and the speaker. All 21 parts carry a label.",img:["log-inside.webp","Raspberry Pi","ESP32-S3"]},
     {d:"2026-11-07",k:"Hardware",s:"plate",t:"First prototype board started",b:"The first run of the custom JF-1 board is under way at LCSC. It brings the ESP32-S3, audio, charging and haptics together on one PCB for the printed prototype."},
     {d:"2026-11-07",k:"Site",s:"wheel",t:"Pixel cursor and a livelier crew",b:"On desktop the pixel dot, heart and arrow are the cursor. On phones the crew hops on its own and whenever you tap a card."},
     {d:"2026-11-06",k:"Hardware",s:"pi",t:"Decision: one custom PCB",b:"Instead of wiring the DAC, amp, charger, haptics and Bluetooth together as separate breakout boards, JF-1 gets one custom PCB made through LCSC. That means fewer cables inside the body, less space taken up, a lower cost per unit and the same board every time."},
@@ -1377,6 +1395,11 @@ setTimeout(function(){layout();update();},600);
         main.appendChild(rows);
       }
       meta.appendChild(tile); meta.appendChild(tag); li.appendChild(main); li.appendChild(meta);
+      if(e.img){
+        var fig=el("figure","log-fig"), im=el("img"); im.src=e.img[0]; im.alt="Exploded view before and after: "+e.img[1]+" on the left, "+e.img[2]+" on the right"; im.loading="lazy"; im.decoding="async"; im.width=1124; im.height=560;
+        var cap=el("figcaption","mono"); cap.appendChild(el("span",null,"Before / "+e.img[1])); cap.appendChild(el("span",null,"After / "+e.img[2]));
+        fig.appendChild(im); fig.appendChild(cap); meta.appendChild(fig);
+      }
       li._g=cur; li._no=no; cur._ol.appendChild(li);
     });
     document.getElementById("logMeta").textContent="Updated "+latest[2]+"."+latest[1]+"."+latest[0];
