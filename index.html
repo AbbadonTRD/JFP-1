@@ -269,6 +269,7 @@ html.pxc input,html.pxc textarea,html.pxc select{cursor:text!important}
 .log-fig figcaption{display:flex;justify-content:space-between;gap:8px;margin-top:6px;font-size:10.5px;color:var(--muted)}
 .log-tag{display:flex;flex-direction:column;gap:4px;color:var(--muted)}
 .log-k.hw{color:#b8431a}
+.log-tag.inline{flex-direction:row;flex-wrap:wrap;gap:4px 12px}
 .log-st{display:block;padding-inline:14px var(--gutter-r);padding-top:6px;align-self:start}
 .log-state .log-t{padding-inline:clamp(18px,2vw,30px) 24px}
 .log-st.wip{color:#b8431a}
@@ -980,8 +981,8 @@ setTimeout(function(){layout();update();},600);
     /* layout reads are throttled, and wait for scrolling to pause so they never interrupt it */
     /* the full check (headings) waits for scrolling to pause; while scrolling, only the section under the shape is read,
        which is cheap, so the shape changes as soon as a new section arrives instead of after the scroll */
-    if(now-lastDecide>100){
-      if(now-lastScroll>140){if(moved||mode==="arrow"){moved=false;lastDecide=now;decide();}}
+    if(now-lastDecide>50){
+      if(now-lastScroll>90){if(moved||mode==="arrow"){moved=false;lastDecide=now;decide();}}
       else if(mode!=="arrow"){lastDecide=now;var want=sectionShape();if(want!==mode){prevMode=mode;mode=want;morph=reduce?1:0;}}
     }
     /* the shape trails the hidden pointer with a soft lag and a gentle idle float, as before; links grow it a little, a press squeezes it */
@@ -989,14 +990,14 @@ setTimeout(function(){layout();update();},600);
     var tx=mx+flx, ty=my+fly, ox=fx, oy=fy;
     if(reduce){fx=tx;fy=ty;ang=tgtAng;}
     else{
-      var a=1-Math.pow(1-0.24,dt/16.7); fx+=(tx-fx)*a; fy+=(ty-fy)*a;
-      var da=Math.atan2(Math.sin(tgtAng-ang),Math.cos(tgtAng-ang)); ang+=da*(1-Math.pow(1-0.14,dt/16.7));
+      var a=1-Math.pow(1-0.32,dt/16.7); fx+=(tx-fx)*a; fy+=(ty-fy)*a;
+      var da=Math.atan2(Math.sin(tgtAng-ang),Math.cos(tgtAng-ang)); ang+=da*(1-Math.pow(1-0.28,dt/16.7));
     }
     /* a shape change dips the size briefly, so the swap reads as one soft pop instead of a hard cut */
     var ts=(down?0.82:(hot?1.3:1))*(morph<1&&!reduce?1-0.22*Math.sin(Math.PI*morph):1);
     sc+=(ts-sc)*(reduce?1:1-Math.pow(1-0.35,dt/16.7));
     var k=dt/16.7; vx+=((fx-ox)/k-vx)*0.35; vy+=((fy-oy)/k-vy)*0.35;
-    if(morph<1)morph=Math.min(1,morph+dt/320);
+    if(morph<1)morph=Math.min(1,morph+dt/220);
     var t=(now/90)|0;
     /* mosaic trail on the page grid: lingers behind the moving shape */
     var dec=Math.pow(0.9,k);
@@ -1394,7 +1395,7 @@ setTimeout(function(){layout();update();},600);
         e.r.forEach(function(x){var p=el("div","prow mono");p.appendChild(el("b",null,x[0]));p.appendChild(el("span","ld"));p.appendChild(el("span","st done",x[1]));rows.appendChild(p);});
         main.appendChild(rows);
       }
-      meta.appendChild(tile); meta.appendChild(tag); li.appendChild(main); li.appendChild(meta);
+      if(e.img)tag.classList.add("inline"); else meta.appendChild(tile); meta.appendChild(tag); li.appendChild(main); li.appendChild(meta);
       if(e.img){
         var fig=el("figure","log-fig"), im=el("img"); im.src=e.img[0]; im.alt="Exploded view before and after: "+e.img[1]+" on the left, "+e.img[2]+" on the right"; im.loading="lazy"; im.decoding="async"; im.width=1124; im.height=560;
         var cap=el("figcaption","mono"); cap.appendChild(el("span",null,"Before / "+e.img[1])); cap.appendChild(el("span",null,"After / "+e.img[2]));
