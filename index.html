@@ -423,15 +423,15 @@ html.pxc input,html.pxc textarea,html.pxc select{cursor:text!important}
 .nd h3{margin:4px 0 0;font-size:clamp(15px,1.4vw,20px);font-weight:500;letter-spacing:-.02em;line-height:1.1}
 .nd .sub{color:var(--crew-muted)}
 .cn{position:relative;height:min(104px,calc((100vw - 60px) / 9 * .9));display:flex;align-items:center}
-.cn .ln{position:relative;flex:1;height:2px;background:var(--fg);transform-origin:0 50%}
-.cn.dash .ln{background:repeating-linear-gradient(to right,var(--fg) 0 6px,transparent 6px 11px)}
-.cn .ln::after{content:"";position:absolute;right:-1px;top:-4px;border-left:7px solid var(--fg);border-top:5px solid transparent;border-bottom:5px solid transparent}
+.cn .ln{position:relative;flex:1;height:2px;background:linear-gradient(var(--fg),var(--fg)) 0 0/calc(100% - 5px) 100% no-repeat;transform-origin:0 50%}   /* the line ends inside its arrowhead, so no stub shows at the tip */
+.cn.dash .ln{background:repeating-linear-gradient(to right,var(--fg) 0 6px,transparent 6px 11px) 0 0/calc(100% - 5px) 100% no-repeat}
+.cn .ln::after{content:"";position:absolute;right:0;top:-4px;border-left:7px solid var(--fg);border-top:5px solid transparent;border-bottom:5px solid transparent}
 .cn .lb{position:absolute;left:0;right:0;top:calc(50% - 30px);text-align:center;color:var(--muted);white-space:nowrap}
 .cn .tag{position:absolute;left:50%;top:calc(50% - 34px);transform:translateX(-50%);border:1px solid var(--orange);color:var(--orange-deep);padding:3px 7px 2px;white-space:nowrap}
 /* the signal: the line lights up orange from its start to the arrow tip, then fades back */
-.cn .pk{position:absolute;inset:0;z-index:1;background:var(--orange);clip-path:inset(-6px 100% -6px 0);opacity:0;pointer-events:none}
-.cn.dash .pk{background:repeating-linear-gradient(to right,var(--orange) 0 6px,transparent 6px 11px)}
-.cn .pk::after{content:"";position:absolute;right:-1px;top:-4px;border-left:7px solid var(--orange);border-top:5px solid transparent;border-bottom:5px solid transparent}
+.cn .pk{position:absolute;inset:0;z-index:1;background:linear-gradient(var(--orange),var(--orange)) 0 0/calc(100% - 7px) 100% no-repeat;clip-path:inset(-6px 100% -6px 0);opacity:0;pointer-events:none}   /* the orange stops at the base of the arrowhead; the head turns orange only when the pulse reaches it */
+.cn.dash .pk{background:repeating-linear-gradient(to right,var(--orange) 0 6px,transparent 6px 11px) 0 0/calc(100% - 7px) 100% no-repeat}
+.cn .pk::after{content:"";position:absolute;right:0;top:-4px;border-left:7px solid var(--orange);border-top:5px solid transparent;border-bottom:5px solid transparent}
 /* the Bluetooth branch: an elbow from under the ESP32-S3, then a short run to its node */
 .fl-alt .elbow{grid-column:5;align-self:stretch;position:relative;margin-top:calc(-1 * clamp(18px,3vh,30px) + 8px)}
 .fl-alt .elbow i{bottom:calc(min(84px,7.5vw) / 2 - 1px)!important}
@@ -479,13 +479,13 @@ html.pxc input,html.pxc textarea,html.pxc select{cursor:text!important}
   .nd .sub{align-self:start}
   .fl-alt::before{content:"Or wireless";display:block;font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
   .cn{height:56px;width:72px;flex-direction:column;justify-content:center}
-  .cn .ln{flex:1;width:2px;height:auto;transform-origin:50% 0}
-  .cn.dash .ln{background:repeating-linear-gradient(to bottom,var(--fg) 0 6px,transparent 6px 11px)}
-  .cn .ln::after{right:auto;left:-4px;top:auto;bottom:-1px;border-top:7px solid var(--fg);border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:0}
+  .cn .ln{flex:1;width:2px;height:auto;transform-origin:50% 0;background-size:100% calc(100% - 5px)}
+  .cn.dash .ln{background:repeating-linear-gradient(to bottom,var(--fg) 0 6px,transparent 6px 11px) 0 0/100% calc(100% - 5px) no-repeat}
+  .cn .ln::after{right:auto;left:-4px;top:auto;bottom:0;border-top:7px solid var(--fg);border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:0}
   .cn .lb,.cn .tag{left:88px;right:auto;top:50%;transform:translateY(-50%)}
-  .cn .pk{clip-path:inset(0 -6px 100% -6px)}
-  .cn.dash .pk{background:repeating-linear-gradient(to bottom,var(--orange) 0 6px,transparent 6px 11px)}
-  .cn .pk::after{right:auto;left:-4px;top:auto;bottom:-1px;border-top:7px solid var(--orange);border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:0}
+  .cn .pk{clip-path:inset(0 -6px 100% -6px);background-size:100% calc(100% - 7px)}
+  .cn.dash .pk{background:repeating-linear-gradient(to bottom,var(--orange) 0 6px,transparent 6px 11px) 0 0/100% calc(100% - 7px) no-repeat}
+  .cn .pk::after{right:auto;left:-4px;top:auto;bottom:0;border-top:7px solid var(--orange);border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:0}
   @keyframes fplv{0%{clip-path:inset(0 -6px 100% -6px);opacity:1;animation-timing-function:cubic-bezier(.45,0,.55,1)}19%{clip-path:inset(0 -6px 0 -6px);opacity:1;animation-timing-function:ease-out}34%,100%{clip-path:inset(0 -6px 0 -6px);opacity:0}}
   .flow.run .cn .pk{animation-name:fplv}
   .js .flow .cn .ln{transform:scaleY(0)}
