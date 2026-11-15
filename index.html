@@ -413,6 +413,7 @@ html.pxc input,html.pxc textarea,html.pxc select{cursor:text!important}
 .flow-head .eyebrow{display:block;color:var(--muted);margin-bottom:14px}
 .flow h2{margin:0;font-weight:400;font-size:clamp(36px,6vw,92px);line-height:.92;letter-spacing:-.035em;text-transform:uppercase;text-wrap:balance}
 .flow-head p{margin:0;color:var(--crew-muted);font-size:15px;max-width:36ch}
+.fl-foot{margin:clamp(36px,7vh,72px) 0 0;padding-top:14px;border-top:1px solid var(--crew-line);font-family:var(--f-mono);font-size:12px;letter-spacing:.02em;color:var(--muted);max-width:none}
 .fl-main,.fl-alt{display:grid;grid-template-columns:repeat(4,minmax(0,1fr) minmax(36px,.9fr)) minmax(0,1fr);align-items:start}
 .fl-alt{margin-top:clamp(18px,3vh,30px)}
 .nd{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;min-width:0}
@@ -427,7 +428,10 @@ html.pxc input,html.pxc textarea,html.pxc select{cursor:text!important}
 .cn .ln::after{content:"";position:absolute;right:-1px;top:-4px;border-left:7px solid var(--fg);border-top:5px solid transparent;border-bottom:5px solid transparent}
 .cn .lb{position:absolute;left:0;right:0;top:calc(50% - 30px);text-align:center;color:var(--muted);white-space:nowrap}
 .cn .tag{position:absolute;left:50%;top:calc(50% - 34px);transform:translateX(-50%);border:1px solid var(--orange);color:var(--orange-deep);padding:3px 7px 2px;white-space:nowrap}
-.cn .pk{position:absolute;top:-4px;left:0;width:10px;height:10px;background:var(--orange);opacity:0}
+/* the signal: the line lights up orange from its start to the arrow tip, then fades back */
+.cn .pk{position:absolute;inset:0;z-index:1;background:var(--orange);clip-path:inset(-6px 100% -6px 0);opacity:0;pointer-events:none}
+.cn.dash .pk{background:repeating-linear-gradient(to right,var(--orange) 0 6px,transparent 6px 11px)}
+.cn .pk::after{content:"";position:absolute;right:-1px;top:-4px;border-left:7px solid var(--orange);border-top:5px solid transparent;border-bottom:5px solid transparent}
 /* the Bluetooth branch: an elbow from under the ESP32-S3, then a short run to its node */
 .fl-alt .elbow{grid-column:5;align-self:stretch;position:relative;margin-top:calc(-1 * clamp(18px,3vh,30px) + 8px)}
 .fl-alt .elbow i{bottom:calc(min(84px,7.5vw) / 2 - 1px)!important}
@@ -436,25 +440,34 @@ html.pxc input,html.pxc textarea,html.pxc select{cursor:text!important}
 .fl-alt .nd{grid-column:7 / span 3;flex-direction:row;text-align:left;align-items:center;gap:16px}
 .fl-alt .nd .tile{width:min(84px,7.5vw);flex:none}
 .fl-alt .nd h3{margin:0}
-/* reveal: steps rather than fades, like the rest of the page */
-.js .flow .nd{opacity:0;transform:translateY(10px);transition:opacity .4s steps(3),transform .4s steps(3);transition-delay:calc(var(--k) * 260ms)}
-.js .flow .cn .ln,.js .flow .elbow i{transform:scaleX(0);transition:transform .45s steps(6);transition-delay:calc(var(--k) * 260ms + 140ms)}
+/* reveal: smooth, one part after the other */
+.flow{--ease:cubic-bezier(.22,.8,.24,1)}
+.js .flow .nd{opacity:0;transform:translateY(14px);transition:opacity .7s var(--ease),transform .9s var(--ease);transition-delay:calc(var(--k) * 260ms)}
+.js .flow .cn .ln,.js .flow .elbow i{transform:scaleX(0);transition:transform .8s cubic-bezier(.65,0,.35,1);transition-delay:calc(var(--k) * 260ms + 140ms)}
 .js .flow .elbow i{transform:scaleY(0)}
-.js .flow .cn .lb,.js .flow .cn .tag{opacity:0;transition:opacity .3s steps(2);transition-delay:calc(var(--k) * 260ms + 400ms)}
+.js .flow .cn .lb,.js .flow .cn .tag{opacity:0;transition:opacity .6s ease;transition-delay:calc(var(--k) * 260ms + 450ms)}
 .js .flow.on .nd{opacity:1;transform:none}
 .js .flow.on .cn .ln{transform:none}
 .js .flow.on .elbow i{transform:none}
 .js .flow.on .cn .lb,.js .flow.on .cn .tag{opacity:1}
 /* once everything stands, a packet runs the route on a loop; each node hops as it arrives */
-.flow.run .cn .pk{animation:fpk var(--cyc) steps(14) infinite;animation-delay:calc(var(--s) * var(--cyc) / 5)}
-.flow.run .nd .tile canvas,.flow.run .nd .tile svg{animation:fhop var(--cyc) steps(2) infinite;animation-delay:calc(var(--s) * var(--cyc) / 5)}
-.flow.run .cn .tag{animation:ftag var(--cyc) steps(2) infinite;animation-delay:calc(var(--s) * var(--cyc) / 5)}
-@keyframes fpk{0%{left:0;opacity:1}19.9%{left:calc(100% - 10px);opacity:1}20%,100%{left:calc(100% - 10px);opacity:0}}
-@keyframes fhop{0%,6%,100%{transform:none}2%{transform:translateY(-14%)}}
-@keyframes ftag{0%,18%,100%{background:transparent;color:var(--orange-deep)}6%,12%{background:var(--orange);color:#161615}}
+.flow.run .cn .pk{animation:fpl var(--cyc) linear infinite;animation-delay:calc(var(--s) * var(--cyc) / 5)}
+.flow.run .nd .tile canvas,.flow.run .nd .tile svg{animation:fhop var(--cyc) infinite;animation-delay:calc(var(--s) * var(--cyc) / 5)}
+.flow.run .cn .tag{animation:ftag var(--cyc) ease infinite;animation-delay:calc(var(--s) * var(--cyc) / 5)}
+/* the packet glides across its line (eased in and out) and fades at both ends */
+/* Bluetooth branch: the pulse leaves the ESP32-S3 with the main one, runs down the bend, along it, then into the last arrow */
+.fl-alt .elbow i::after{content:"";position:absolute;left:-2px;top:0;right:0;bottom:-2px;border-left:2px solid var(--orange);border-bottom:2px solid var(--orange);clip-path:inset(0 calc(100% - 2px) 100% 0);opacity:0}
+.flow.run .fl-alt .elbow i::after{animation:fplb var(--cyc) linear infinite;animation-delay:calc(2 * var(--cyc) / 5)}
+.flow.run .fl-alt .cn .pk{animation-name:fplc}
+@keyframes fplb{0%{clip-path:inset(0 calc(100% - 2px) 100% 0);opacity:1;animation-timing-function:cubic-bezier(.45,0,1,1)}5%{clip-path:inset(0 calc(100% - 2px) 0 0);opacity:1}12%{clip-path:inset(0 0 0 0);opacity:1;animation-timing-function:ease-out}34%,100%{clip-path:inset(0 0 0 0);opacity:0}}
+@keyframes fplc{0%,12%{clip-path:inset(-6px 100% -6px 0);opacity:1;animation-timing-function:cubic-bezier(0,0,.4,1)}19%{clip-path:inset(-6px 0 -6px 0);opacity:1;animation-timing-function:ease-out}38%,100%{clip-path:inset(-6px 0 -6px 0);opacity:0}}
+@keyframes fpl{0%{clip-path:inset(-6px 100% -6px 0);opacity:1;animation-timing-function:cubic-bezier(.45,0,.55,1)}19%{clip-path:inset(-6px 0 -6px 0);opacity:1;animation-timing-function:ease-out}34%,100%{clip-path:inset(-6px 0 -6px 0);opacity:0}}
+@keyframes fhop{0%{transform:none;animation-timing-function:cubic-bezier(.3,0,.3,1)}3%{transform:translateY(-12%);animation-timing-function:cubic-bezier(.5,0,.4,1.4)}9%,100%{transform:none}}
+@keyframes ftag{0%,2%,22%,100%{background:transparent;color:var(--orange-deep)}8%,14%{background:var(--orange);color:#161615}}
 @media (prefers-reduced-motion:reduce){
   .js .flow .nd,.js .flow .cn .ln,.js .flow .elbow i,.js .flow .cn .lb,.js .flow .cn .tag{opacity:1;transform:none;transition:none}
   .flow.run .cn .pk,.flow.run .nd .tile canvas,.flow.run .nd .tile svg,.flow.run .cn .tag{animation:none}
+  .flow.run .fl-alt .cn .pk,.flow.run .fl-alt .elbow i::after{animation:none}
 }
 /* phones: the route runs top to bottom, the wireless branch follows as its own line */
 @media (max-width:859px){
@@ -470,16 +483,55 @@ html.pxc input,html.pxc textarea,html.pxc select{cursor:text!important}
   .cn.dash .ln{background:repeating-linear-gradient(to bottom,var(--fg) 0 6px,transparent 6px 11px)}
   .cn .ln::after{right:auto;left:-4px;top:auto;bottom:-1px;border-top:7px solid var(--fg);border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:0}
   .cn .lb,.cn .tag{left:88px;right:auto;top:50%;transform:translateY(-50%)}
-  .cn .pk{left:-4px;top:0}
-  @keyframes fpkv{0%{top:0;opacity:1}19.9%{top:calc(100% - 10px);opacity:1}20%,100%{top:calc(100% - 10px);opacity:0}}
-  .flow.run .cn .pk{animation-name:fpkv}
+  .cn .pk{clip-path:inset(0 -6px 100% -6px)}
+  .cn.dash .pk{background:repeating-linear-gradient(to bottom,var(--orange) 0 6px,transparent 6px 11px)}
+  .cn .pk::after{right:auto;left:-4px;top:auto;bottom:-1px;border-top:7px solid var(--orange);border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:0}
+  @keyframes fplv{0%{clip-path:inset(0 -6px 100% -6px);opacity:1;animation-timing-function:cubic-bezier(.45,0,.55,1)}19%{clip-path:inset(0 -6px 0 -6px);opacity:1;animation-timing-function:ease-out}34%,100%{clip-path:inset(0 -6px 0 -6px);opacity:0}}
+  .flow.run .cn .pk{animation-name:fplv}
   .js .flow .cn .ln{transform:scaleY(0)}
   .fl-alt{margin-top:22px;padding-top:22px;border-top:1px solid var(--crew-line)}
   .fl-alt .elbow{display:none}
   .fl-alt .cn{display:none}
   .fl-alt .nd{grid-column:1;display:flex;flex-direction:row;align-items:center;gap:16px}
   .fl-alt .nd .tile{width:72px}
+  /* one compact route card: steps numbered on the right, labels sit right beside their line */
+  .flow-head{margin-bottom:28px}
+  .fl-main{counter-reset:st;border:1px solid var(--crew-line);border-bottom:0;padding:16px 16px 4px}
+  .fl-main .nd{counter-increment:st;grid-template-columns:56px minmax(0,1fr) auto;column-gap:14px}
+  .fl-main .nd::after{content:counter(st,decimal-leading-zero);grid-column:3;grid-row:1 / span 2;align-self:center;font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;color:var(--muted)}
+  .nd .tile{width:56px}
+  .nd h3{font-size:16px}
+  .cn{height:40px;width:56px}
+  .cn .lb,.cn .tag{left:70px;font-size:11px}
+  .cn .tag{padding:2px 6px 1px}
+  .fl-alt{margin-top:0;padding:14px 16px 16px;border:1px solid var(--crew-line);border-top:1px dashed var(--crew-line)}
+  .fl-alt::before{content:"Or wireless, from the ESP32-S3";margin-bottom:10px}
+  .fl-alt .nd{gap:14px}
+  .fl-alt .nd .tile{width:56px}
+  .fl-foot{margin-top:16px;padding-top:0;border-top:0;font-size:12px;line-height:1.55}
+  .fl-main,.fl-alt,.fl-foot{max-width:560px}
+  /* scroll-locked on phones: the card stays centred on screen while the scroll walks the music along the route */
+  .flow.scrub .fl-track{position:relative;height:260vh;height:260svh}
+  .flow.scrub .fl-pin{position:sticky;top:0;height:100vh;height:100svh;display:flex;flex-direction:column;justify-content:center;padding:64px 0 16px}
+  .flow.scrub .fl-main,.flow.scrub .fl-alt,.flow.scrub .fl-foot{width:min(100%,400px);margin-inline:auto}
+  .flow.scrub .cn .pk{animation:none!important;opacity:1;clip-path:inset(0 -6px calc((1 - var(--f,0)) * 100%) -6px)}
+  .flow.scrub .nd .tile canvas,.flow.scrub .nd .tile svg,.flow.scrub .cn .tag{animation:none!important}
+  .flow.scrub .cn .tag{transition:background .3s,color .3s}
+  .flow.scrub .cn .tag.on{background:var(--orange);color:#161615}
+  .flow.scrub .nd .tile{transition:border-color .3s}
+  .flow.scrub .nd.lit .tile{border-color:var(--orange)}
+  .flow.scrub .fl-main .nd.lit::after{color:var(--orange)}
+  .flow.scrub .nd.hit .tile canvas,.flow.scrub .nd.hit .tile svg{animation:fhit .5s cubic-bezier(.3,0,.3,1)!important}
+  @media (max-height:740px){
+    .flow.scrub .fl-pin{padding-top:56px}
+    .flow.scrub .nd .tile,.flow.scrub .fl-alt .nd .tile{width:46px}
+    .flow.scrub .fl-main .nd{grid-template-columns:46px minmax(0,1fr) auto}
+    .flow.scrub .cn{height:30px;width:46px}
+    .flow.scrub .cn .lb,.flow.scrub .cn .tag{left:60px}
+    .flow.scrub .nd h3{font-size:15px}
+  }
 }
+@keyframes fhit{0%{transform:none}35%{transform:translateY(-12%)}100%{transform:none}}
 </style>
 </head>
 <body>
@@ -555,8 +607,9 @@ html.pxc input,html.pxc textarea,html.pxc select{cursor:text!important}
 <section class="flow" id="flow" aria-labelledby="flowTitle">
   <div class="flow-head">
     <div><span class="eyebrow mono rv">JFP-1 / Signal path</span><h2 id="flowTitle" class="rv">From your server to your ears.</h2></div>
-    <p class="rv">Music syncs over Wi-Fi while you are home. After that it plays from the card, with no signal needed. Wired headphones get it lossless through a dedicated DAC, wireless ones over Bluetooth.</p>
+    <p class="rv">Music syncs over Wi-Fi from your Jellyfin server while you are home. After that it plays from the card, with no signal needed. Wired headphones get it lossless through a dedicated DAC, wireless ones over Bluetooth.</p>
   </div>
+  <div class="fl-track"><div class="fl-pin">
   <div class="fl-main" id="flMain">
     <div class="nd" style="--k:0;--s:0"><div class="tile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .002C8.826.002-1.398 18.537.16 21.666c1.56 3.129 22.14 3.094 23.682 0C25.384 18.573 15.177 0 12 0zm7.76 18.949c-1.008 2.028-14.493 2.05-15.514 0C3.224 16.9 9.92 4.755 12.003 4.755c2.081 0 8.77 12.166 7.759 14.196zM12 9.198c-1.054 0-4.446 6.15-3.93 7.189.518 1.04 7.348 1.027 7.86 0 .511-1.027-2.874-7.19-3.93-7.19z"/></svg></div><h3>Your server</h3><span class="sub mono">Jellyfin library</span></div>
     <div class="cn dash" style="--k:0;--s:0"><span class="lb mono">Wi-Fi sync</span><span class="ln"><i class="pk"></i></span></div>
@@ -573,6 +626,8 @@ html.pxc input,html.pxc textarea,html.pxc select{cursor:text!important}
     <div class="cn" style="--k:3;--s:2"><span class="ln"><i class="pk"></i></span></div>
     <div class="nd" style="--k:4;--s:3"><div class="tile" data-sp="bt"></div><div><h3>Bluetooth</h3><span class="sub mono">KCX BT, wireless headphones</span></div></div>
   </div>
+  <p class="fl-foot rv">No Jellyfin server? JFP-1 plays the music you copy onto its microSD card just as well. The automatic sync is what it is made for.</p>
+  </div></div>
 </section>
 
 <section class="studio" id="studio" aria-label="Behind JFP-1">
@@ -1474,6 +1529,7 @@ setTimeout(function(){layout();update();},600);
      d: date, k: Hardware | Software | Site, s: crew sprite, t: title, b: text, r: optional detail rows.
      The status panel takes its date and latest hardware line from this list. */
   var TIMELINE=[
+    {d:"2026-11-15",k:"Site",s:"sim",t:"Smoother signal path, server optional",b:"The signal path now shows the music as a smooth orange pulse that runs along each line to the next part, instead of a dot that stepped. The section also says it plainly: JFP-1 is made for the automatic sync with your Jellyfin server, and it plays music you copy onto the microSD card without one."},
     {d:"2026-11-15",k:"Site",s:"dac",t:"The signal path, step by step",b:"A new section after the specs follows the music from your Jellyfin server over Wi-Fi to the microSD, through the ESP32-S3 and the DAC to your headphones, or over Bluetooth. A pixel packet runs the route while you look at it."},
     {d:"2026-11-13",k:"Site",s:"display",t:"New name: JFP-1, and a menu that stays",b:"JF-1 is now JFP-1, short for Jellyfin Player 1. On the page, the section menu now stays at the top right while you scroll, and marks the section you are in."},
     {d:"2026-11-11",k:"Site",s:"pi",t:"Exploded view shows the ESP32-S3 build",b:"The exploded view at the top of the page still opened the first system: a Raspberry Pi with a SIM card. It now opens the current build as a new animation, with the ESP32-S3, the audio and haptics boards, microSD and the speaker. All 21 parts carry a label.",img:["log-inside.webp","Raspberry Pi","ESP32-S3"]},
@@ -1789,6 +1845,35 @@ setTimeout(function(){layout();update();},600);
     if(vis&&!started){started=true;sec.classList.add("on");setTimeout(function(){ready=true;sec.classList.toggle("run",vis);},5*260+700);}
     else if(ready)sec.classList.toggle("run",vis);
   },{threshold:0.35}).observe(sec);
+})();
+
+/* ================= Signal path on phones: pinned, and the scroll moves the music along the route ================= */
+(function(){
+  var sec=document.getElementById("flow"); if(!sec||reduce||!window.matchMedia)return;
+  var mq=matchMedia("(max-width:859px)"), track=sec.querySelector(".fl-track");
+  var pks=[].slice.call(sec.querySelectorAll("#flMain .cn .pk")), nds=[].slice.call(sec.querySelectorAll("#flMain .nd")).concat([sec.querySelector(".fl-alt .nd")]);
+  var tag=sec.querySelector("#flMain .cn .tag"), was=[];
+  function set(){
+    var on=mq.matches; sec.classList.toggle("scrub",on);
+    if(!on){pks.forEach(function(pk){pk.style.removeProperty("--f");});nds.forEach(function(n){n.classList.remove("lit","hit");});if(tag)tag.classList.remove("on");was=[];}
+    apply();
+  }
+  function apply(){
+    if(!sec.classList.contains("scrub"))return;
+    var r=track.getBoundingClientRect(), span=track.offsetHeight-innerHeight;
+    if(r.top<innerHeight*0.85)sec.classList.add("on");
+    var p=Math.max(0,Math.min(1,-r.top/(span||1))), t=p*5.2-0.1;      /* four lines, then the wireless branch; a short hold at both ends */
+    pks.forEach(function(pk,i){var f=Math.max(0,Math.min(1,t-i));f=f*f*(3-2*f);pk.style.setProperty("--f",f.toFixed(3));});
+    nds.forEach(function(n,j){
+      var on=j<5?t>=j-0.02:t>=4.5;
+      if(on&&!was[j]){n.classList.add("hit");setTimeout(function(){n.classList.remove("hit");},520);}
+      n.classList.toggle("lit",on); was[j]=on;
+    });
+    if(tag)tag.classList.toggle("on",t>2&&t<3.3);
+  }
+  var tk=false; addEventListener("scroll",function(){if(!tk){tk=true;requestAnimationFrame(function(){tk=false;apply();});}},{passive:true});
+  if(mq.addEventListener)mq.addEventListener("change",set);else mq.addListener(set);
+  onResize(apply); set();
 })();
 
 /* ================= Browser bars: address bar and status area take the colour of the section at that screen edge.
