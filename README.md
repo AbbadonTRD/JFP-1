@@ -18,7 +18,7 @@ This repository holds the landing page at [jf-1.duneify.com](https://jf-1.duneif
 
 ## How it plays
 
-<img src=".github/assets/how-it-plays.webp" alt="How it plays: your Jellyfin server syncs over Wi-Fi to the microSD card. The ESP32-S3 plays from the card offline and sends the music lossless to the PCM5102A DAC and the 3.5 mm jack, or over the KCX BT module to Bluetooth headphones." width="100%">
+<img src=".github/assets/how-it-plays.webp" alt="How it plays, animated: your Jellyfin server syncs over Wi-Fi to the microSD card. The ESP32-S3 plays from the card offline and sends the music lossless to the PCM5102A DAC and the 3.5 mm jack, or over the KCX BT module to Bluetooth headphones." width="100%">
 
 <br>
 
